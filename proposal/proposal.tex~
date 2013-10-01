@@ -18,9 +18,7 @@
 Applications have diverse memory access patterns. As of now, cache configurations are rigid and cannot exploit certain predictable repetition in memory access patterns. Having a dynamic cache structure that tailors itself towards the currently executing application could yield higher performance by removing a great deal of cache conflict misses that would normally occur with a statically configured cache.  Many microarchitectures these days use runahead execution to predict cache misses and schedule memory requests in advance, but to put a processor in runahead-mode is costly and is only beneficial if the cache miss latency it hides is long. Instead, targeting the cache dynamically could result in similar performance increases to that of runahead execution without incurring the same high costs.
 
 \section{Novelty}
-People have tried to tackle this problem with prefetchers, runahead execution, and general purpose access pattern predictors to hide latency. With configurable caching, we can certainly augment these techniques, if not replace them. 
-
-Currently, many microarchitecture designers use a branch predictor that implements hysteresis to determine what prediction to use during execution of each branch in the code. We can use this same concept of hysteresis to waiver between two or more cache implementations. This is an idea that we believe to be far from anything anyone has implemented but uses techniques that have been used in the past to assure effectiveness. 
+People have tried to tackle this problem with prefetchers, runahead execution, and general purpose access pattern predictors to hide latency. With configurable caching, we can certainly augment these techniques, if not replace them.
 
 \section{Idea}
 Consider having the private L1 cache be configurable. That is, design it such that we can dynamically determine the optimal number of sets (and therefore associativity) and perhaps even the block size. Imagine implementing the selection logic for a particular block for a number of different configurations and connecting them to the same cache. At any given time only one scheme would be enabled.
