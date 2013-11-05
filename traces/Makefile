@@ -4,7 +4,7 @@ CFLAGS=-c -Wall
 LDFLAGS=
 SOURCES=test.c
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=driver
+EXECUTABLE=test
 
 # targets
 all: $(SOURCES) $(EXECUTABLE)
