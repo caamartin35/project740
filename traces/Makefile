@@ -1,8 +1,8 @@
 # macros
-CC=g++
+CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=driver.cpp compressor.cpp
+SOURCES=test.c
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=driver
 
