@@ -31,6 +31,21 @@ Compressor::Compressor(int size, int sets, int ways) {
   evictions = 0;
 }
 
+void Compressor::Load(pointer_t address, size_t size, data_t data) {
+  // pointer_t index = get_set(address);
+  // pointer_t tag = get_tag(address);
+  // vector<Line>& set = cache[index];
+  // Line* line = contains(set, tag);
+}
+
+void Compressor::Store(pointer_t address, size_t size, data_t data) {
+  // int index = get_set(address);
+  // vector<Line>& set = cache[index];
+}
+
+//
+// Debugging functions
+//
 void Compressor::Print() {
   for (int i = 0; i < sets; i++) {
     vector<Line>& set = cache[i];
@@ -41,6 +56,18 @@ void Compressor::Print() {
     }
     cout << endl;
   }
+}
+
+//
+// Private functions
+//
+Line* Compressor::contains(vector<Line>& set, pointer_t tag) {
+  for (int i = 0; i < set.size(); i++) {
+    Line& line = set[i];
+    if (line.tag == tag)
+      return &line;
+  }
+  return NULL;
 }
 
 pointer_t Compressor::get_tag(pointer_t address) {

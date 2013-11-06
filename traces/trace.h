@@ -14,8 +14,7 @@ typedef struct {
 
 void trace_init(trace_t* trace, const char *fname);
 void trace_destroy(trace_t* trace);
-void trace_load(trace_t* trace, void *address, size_t size);
-void trace_store(trace_t* trace, void *address,
-    size_t size, data_t data);
+void trace_load(trace_t* trace, void *address, size_t size, data_t data);
+void trace_store(trace_t* trace, void *address, size_t size, data_t data);
 
 #endif

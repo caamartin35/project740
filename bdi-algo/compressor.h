@@ -10,11 +10,14 @@
 class Compressor {
  public:
   Compressor(int size, int sets, int ways);
+  void Load(pointer_t address, size_t size, data_t data);
+  void Store(pointer_t address, size_t size, data_t data);
   void Print();
   int hits;
   int misses;
   int evictions;
  private:
+  Line* contains(std::vector<Line>& set, pointer_t tag);
   pointer_t get_tag(pointer_t address);
   pointer_t get_set(pointer_t address);
   pointer_t get_bib(pointer_t address);
