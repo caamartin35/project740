@@ -2,8 +2,8 @@
 CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=test.c
-OBJECTS=$(SOURCES:.cpp=.o)
+SOURCES=trace.c test.c
+OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=test
 
 # targets
@@ -14,7 +14,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
 
-.cpp.o:
+.c.o:
 	$(CC) $(CFLAGS) $< -o $@
 
 
