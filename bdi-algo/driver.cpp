@@ -9,10 +9,10 @@ using std::stringstream;
 int main(int argc, char const *argv[]) {
   // initialize
   cout << ">> Starting driver ... " << endl;
-  Compressor compressor(CACHE_SIZE, CACHE_SETS, CACHE_WAYS);
+  Compressor compressor(CACHE_SIZE, CACHE_WAYS, CACHE_BSIZE);
 
   // open the trace file
-  string trace_file_name = std::string(PATH_TO_TRACE_DIR) + "test.trace";
+  string trace_file_name = std::string(PATH_TO_TRACE_DIR) + "simple.trace";
   cout << ">> Parsing file: " << trace_file_name << endl;
   ifstream trace_file(trace_file_name);
 
@@ -39,6 +39,7 @@ int main(int argc, char const *argv[]) {
   }
 
   // print out the results
+  compressor.Print();
   cout << ">> Results: " << endl;
   cout << "   hits = " << compressor.hits << endl;
   cout << "   misses = " << compressor.misses << endl;

@@ -4,25 +4,27 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-Compressor::Compressor(int size, int sets, int ways) {
+Compressor::Compressor(int size, int ways, int block_size) {
   // configure the cache dimensions
   this->size = size;
-  this->sets = sets;
   this->ways = ways;
-  this->block_size = size / sets / ways;
+  this->block_size = block_size;
+  this->sets = size / ways / block_size;
 
   // compute the address masks
   set_bits = log2(sets);
   bib_bits = log2(block_size);
-  tag_bits = log2(sizeof(pointer_t) << 3) - set_bits - bib_bits;
+  tag_bits = (sizeof(pointer_t) << 3) - set_bits - bib_bits;
+  cout << tag_bits << endl;
 
   // allocate cache memory
-  cache.resize(sets);
-  for (int i = 0; i < cache.size(); i++) {
-    for (int j = 0; j < ways; j++) {
-      Line line;
-      cache[i].push_back(line);
-    }
+  tag_store.resize(sets);
+  for (int i = 0; i < tag_store.size(); i++) {
+    tag_store[i].resize(2 * ways);
+  }
+  data_store.resize(sets);
+  for (int i = 0; i < data_store.size(); i++) {
+    data_store[i].resize(block_size);
   }
 
   // initialize counters
@@ -39,8 +41,19 @@ void Compressor::Load(pointer_t address, size_t size, data_t data) {
 }
 
 void Compressor::Store(pointer_t address, size_t size, data_t data) {
-  // int index = get_set(address);
-  // vector<Line>& set = cache[index];
+  int index = get_set(address);
+  vector<Tag>& tags = tag_store[index];
+  pointer_t needle = get_tag(address);
+  Tag *tag = contains(tags, needle);
+  if (!tag) {
+    misses++;
+  } else {
+    // check if we need to evict
+    // then do this
+    hits++;
+    tag->valid = true;
+    tag->tag = needle;
+  }
 }
 
 //
@@ -48,11 +61,11 @@ void Compressor::Store(pointer_t address, size_t size, data_t data) {
 //
 void Compressor::Print() {
   for (int i = 0; i < sets; i++) {
-    vector<Line>& set = cache[i];
-    cout << "set " << i << " ";
-    for (int j = 0; j < ways; j++) {
-      Line& line = set[j];
-      cout << line.valid << " ";
+    vector<Tag>& tags = tag_store[i];
+    cout << "set " << i << " <tags> ";
+    for (int j = 0; j < tags.size(); j++) {
+      Tag& tag = tags[j];
+      cout << tag.valid << " ";
     }
     cout << endl;
   }
@@ -61,11 +74,11 @@ void Compressor::Print() {
 //
 // Private functions
 //
-Line* Compressor::contains(vector<Line>& set, pointer_t tag) {
-  for (int i = 0; i < set.size(); i++) {
-    Line& line = set[i];
-    if (line.tag == tag)
-      return &line;
+Tag* Compressor::contains(vector<Tag>& tags, pointer_t needle) {
+  for (int i = 0; i < tags.size(); i++) {
+    Tag& tag = tags[i];
+    if (tag.valid && tag.tag == needle)
+      return &tag;
   }
   return NULL;
 }

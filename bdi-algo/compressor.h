@@ -4,12 +4,12 @@
 #include <iostream>
 #include <vector>
 
-#include "line.h"
+#include "tag.h"
 #include "types.h"
 
 class Compressor {
  public:
-  Compressor(int size, int sets, int ways);
+  Compressor(int size, int ways, int block_size);
   void Load(pointer_t address, size_t size, data_t data);
   void Store(pointer_t address, size_t size, data_t data);
   void Print();
@@ -17,7 +17,7 @@ class Compressor {
   int misses;
   int evictions;
  private:
-  Line* contains(std::vector<Line>& set, pointer_t tag);
+  Tag* contains(std::vector<Tag>& tags, pointer_t needle);
   pointer_t get_tag(pointer_t address);
   pointer_t get_set(pointer_t address);
   pointer_t get_bib(pointer_t address);
@@ -33,7 +33,8 @@ class Compressor {
   int set_bits;
   int bib_bits;
   // memory
-  std::vector<std::vector<Line> > cache;
+  std::vector<std::vector<Tag> > tag_store;
+  std::vector<std::vector<char> > data_store;
 };
 
 #endif
