@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+typedef unsigned long long data_t;
+
 typedef struct {
   const char *name;
   FILE* file;
@@ -11,8 +13,9 @@ typedef struct {
 } trace_t;
 
 void trace_init(trace_t* trace, const char *fname);
+void trace_destroy(trace_t* trace);
 void trace_load(trace_t* trace, void *address, size_t size);
 void trace_store(trace_t* trace, void *address,
-    size_t size, unsigned long long data);
+    size_t size, data_t data);
 
 #endif

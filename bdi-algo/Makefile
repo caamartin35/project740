@@ -2,7 +2,7 @@
 CC=g++
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=driver.cpp compressor.cpp
+SOURCES=driver.cpp compressor.cpp line.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=driver
 

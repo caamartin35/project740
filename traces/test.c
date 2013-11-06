@@ -4,12 +4,13 @@ int main(int argc, char const *argv[]) {
   // set up tracer
   trace_t trace;
   trace_init(&trace, "test.trace");
+  printf(">> Generating memory trace ...\n");
 
   // set up random numbers
   srand(7);
 
   // create a bunch of nodes
-  int num_nodes = 500;
+  int num_nodes = 10;
   node_t* nodes = (node_t*) malloc(num_nodes * sizeof(node_t));
   for (int i = 0; i < num_nodes; i++) {
     node_t* node = nodes + i;
@@ -19,9 +20,12 @@ int main(int argc, char const *argv[]) {
     // use trace lib to record stores
     trace_store(&trace, &node->data, sizeof(node->data), node->data);
     trace_store(&trace, &node->flag, sizeof(node->flag), node->flag);
+    trace_store(&trace, &node->next, sizeof(node->next), (data_t)node->next);
   }
 
-  printf("Hello World!\n");
+  // clean up
+  printf(">> Done!\n");
+  trace_destroy(&trace);
 
   return 0;
 }

@@ -1,7 +1,9 @@
+import re
 import sys
 
 # config
-MAIN_DELIM = '_main:'
+STRUCT_ASSIGN = r'\b([A-Za-z0-9._]+)\b->\b([A-Za-z0-9._]+)\b = ([A-Za-z0-9._]+);'
+DELIM_LOAD = ''
 
 # start
 print '>> Creating traceable file ...'
@@ -9,7 +11,7 @@ print '>> Creating traceable file ...'
 # get and parse arguments
 args = sys.argv
 if (len(args) < 2):
-  print 'Error: You must supply an assembly file.'
+  print 'Error: You must supply an input file.'
   exit(1)
 
 # found file
