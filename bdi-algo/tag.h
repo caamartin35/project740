@@ -8,6 +8,7 @@
 #define SEGMENT_NONE -1
 #define SEGMENT_SIZE 8
 #define SIZE_INVALID -1
+#define COMPRESSION_TYPES 9
 
 typedef enum {
   ZEROS,
