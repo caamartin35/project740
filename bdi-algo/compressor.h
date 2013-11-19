@@ -30,9 +30,11 @@ class Compressor {
 
  private:
   void insert(pointer_t address, size_t size, data_t data);
+  size_t evict(std::vector<Tag>* tags, std::vector<byte_t>* data);
   segment_t readBytes(const std::vector<byte_t>& line, int offset, size_t length);
   void writeBytes(data_t data, int offset, size_t length, std::vector<byte_t>* line);
-  Tag* contains(std::vector<Tag>& tags, pointer_t needle);
+  Tag* contains(std::vector<Tag>* tags, pointer_t needle);
+  Tag* allocateTag(std::vector<Tag>* tags);
   // compression
   void decompress(const Tag& tag, std::vector<byte_t>* out_data);
   void compress(const std::vector<byte_t>& data, std::vector<byte_t>* out_data, compression_t* out_compression);

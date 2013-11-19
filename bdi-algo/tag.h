@@ -25,8 +25,8 @@ typedef enum {
 class Tag {
  public:
   Tag();
-  Tag(int start, int end);
-  void SetInterval(int start, int end);
+  void SetMode(compression_t mode);
+  void Allocate(pointer_t tag, compression_t mode, int seg_start);
   void Print() const;
   // data
   bool valid;
@@ -34,8 +34,8 @@ class Tag {
   pointer_t tag;
   // storage pointers
   int seg_start;
-  int seg_end;
   int size;
+  int size_aligned;
   // for LRU imitation
   unsigned int age;
 };

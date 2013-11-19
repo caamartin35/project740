@@ -41,7 +41,7 @@ void Compressor::Load(pointer_t address, size_t size, data_t data) {
 
 void Compressor::Store(pointer_t address, size_t size, data_t data) {
   int index = getSet(address);
-  vector<Tag>& tags = tag_store[index];
+  vector<Tag>* tags = &tag_store[index];
   pointer_t needle = getTag(address);
   Tag *tag = contains(tags, needle);
   if (!tag) {
@@ -71,12 +71,14 @@ void Compressor::Cycle() {
 void Compressor::insert(pointer_t address, size_t size, data_t data) {
   int index = getSet(address);
   int bib = getBib(address);
+
   // set up the line for compression (we know its uncompressed size)
+  // remember to decompress first!
   vector<byte_t> uncompressed(block_size);
   vector<byte_t> compressed;
-  compression_t type;
+  compression_t mode;
   writeBytes(data, bib, size, &uncompressed);
-  compress(uncompressed, &compressed, &type);
+  compress(uncompressed, &compressed, &mode);
 
   // print some stuff out for now
   for (int i = 0; i < uncompressed.size(); i++)
@@ -86,13 +88,33 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
     cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
   cout << endl;
 
-  // allocate space for the compressed cache line
-  // int new_size = compressed.size();
-  vector<bool> segmentsUsed((ways * block_size) / sizeof(segment_t));
-  const vector<Tag>& tags = tag_store[index];
-  for (int i = 0; i < tags.size(); i++) {
-    // if
+  // Are there any invalid tags? If not we need to evict.
+  vector<Tag>* tags = &tag_store[index];
+  vector<byte_t>* data_array = &data_store[index];
+  Tag* tag = allocateTag(tags);
+  if (!tag) {
+    //evict()
+    // tag = allocateTag(tags);
   }
+
+  // allocate continuous segments for compressed cache line
+  // int new_size = compressed.size();
+  int space = data_array->size();
+  int start = (data_array->size() - space) / sizeof(segment_t);
+  // for (int i = 0; i < tags->size(); i++) {
+  //   if (tags->at(i).valid)
+  //     space -= tags->at(i).size_aligned;
+  // }
+  // while (new_size > space) {
+  //   space += evict()
+  // }
+
+  tag->Allocate(getTag(address), mode, start);
+}
+
+
+size_t Compressor::evict(vector<Tag>* tags, vector<byte_t>* data) {
+  return 0;
 }
 
 
@@ -217,11 +239,18 @@ void Compressor::writeBytes(data_t data, int offset, size_t length, vector<byte_
   }
 }
 
-Tag* Compressor::contains(vector<Tag>& tags, pointer_t needle) {
-  for (int i = 0; i < tags.size(); i++) {
-    Tag& tag = tags[i];
-    if (tag.valid && tag.tag == needle)
-      return &tag;
+Tag* Compressor::contains(vector<Tag>* tags, pointer_t needle) {
+  for (int i = 0; i < tags->size(); i++) {
+    Tag* tag = &tags->at(i);
+    if (tag->valid && tag->tag == needle)
+      return tag;
+  }
+  return NULL;
+}
+
+Tag* Compressor::allocateTag(vector<Tag>* tags) {
+  for (int i = 0; i < tags->size(); i++) {
+    if (!(tags->at(i).valid)) return &tags->at(i);
   }
   return NULL;
 }

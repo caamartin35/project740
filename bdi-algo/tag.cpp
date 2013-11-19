@@ -4,24 +4,36 @@ using std::cout;
 
 Tag::Tag() {
   valid = false;
-  seg_start = -1;
-  seg_end = -1;
-  size = -1;
 }
 
-Tag::Tag(int start, int end) {
-  valid = false;
-  SetInterval(start, end);
+
+void Tag::Allocate(pointer_t tag, compression_t mode, int seg_start) {
+  valid = true;
+  this->tag = tag;
+  SetMode(mode);
+  this->seg_start = seg_start;
 }
 
-void Tag::SetInterval(int start, int end) {
-  seg_start = start;
-  seg_end = end;
-  if (start == SEGMENT_NONE || end == SEGMENT_NONE) {
-    size = SIZE_INVALID;
-  } else {
-    size = (end - start) * SEGMENT_SIZE;
+
+// It is a shame this is hard coded for 32 byte cache blocks.
+// Maybe later we can read in a config file, or order the defines better.
+void Tag::SetMode(compression_t mode) {
+  this->mode = mode;
+  switch (mode) {
+    case ZEROS: size = 1; break;
+    case REP_VALUES: size = 8; break;
+    case BASE8_DELTA1: size = 12; break;
+    case BASE8_DELTA2: size = 16; break;
+    case BASE8_DELTA4: size = 24; break;
+    case BASE4_DELTA1: size = 12; break;
+    case BASE4_DELTA2: size = 20; break;
+    case BASE2_DELTA1: size = 18; break;
+    case NO_COMPRESS:
+    default: size = 32;
   }
+  // calulate the aligned size and start
+  size_t seg_size = sizeof(segment_t);
+  size_aligned = (size % seg_size > 0) ? size + seg_size : size;
 }
 
 void Tag::Print() const {
