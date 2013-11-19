@@ -83,51 +83,49 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
   cout << endl;
 }
 
+
+// Take in a byte vector and try to compress it.
+// The out_compression variable contains the compressed cache line.
 void Compressor::compress(const vector<byte_t>& data,
     vector<byte_t>* out_data, compression_t* out_compression) {
-  // order compression schemes by best ratios
-  compression_t schemes[COMPRESSION_TYPES] = {
-    ZEROS,        REP_VALUES,   BASE8_DELTA1, BASE4_DELTA1,
-    BASE8_DELTA2, BASE2_DELTA1, BASE4_DELTA2, BASE8_DELTA4,
-    NO_COMPRESS
-  };
-  // try each scheme
-  for (int i = 0; i < COMPRESSION_TYPES; i++) {
-    switch (schemes[i]) {
-      // test for all zeros encoding
-      case ZEROS:
-        if (!allZeros(data))
-          continue;
-        out_data->resize(1);
-        out_data->at(0) = 0x00;
-        *out_compression = ZEROS;
-        return;
+  // try each scheme in order of best to worst compression
+  if (allZeros(data)) {
+    out_data->resize(1);
+    out_data->at(0) = 0x00;
+    *out_compression = ZEROS;
+    return;
+  }
 
-      // test for repeated value encoding
-      case REP_VALUES:
-        segment_t rep_value;
-        if (!allSame(data, &rep_value))
-          continue;
-        out_data->resize(sizeof(segment_t));
-        write_bytes(rep_value, 0, sizeof(segment_t), out_data);
-        *out_compression = REP_VALUES;
-        return;
+  // all the same value
+  segment_t rep_value;
+  if (allSame(data, &rep_value)) {
+    out_data->resize(sizeof(segment_t));
+    write_bytes(rep_value, 0, sizeof(segment_t), out_data);
+    *out_compression = REP_VALUES;
+    return;
+  }
 
-      case BASE8_DELTA1: break;
+  // general cases for base + delta compression
+  if (baseDelta(data, 8, 1, out_data)) {
+    *out_compression = BASE8_DELTA1;
+  } else if (baseDelta(data, 4, 1, out_data)) {
+    *out_compression = BASE4_DELTA1;
+  } else if (baseDelta(data, 8, 2, out_data)) {
+    *out_compression = BASE8_DELTA2;
+  } else if (baseDelta(data, 2, 1, out_data)) {
+    *out_compression = BASE2_DELTA1;
+  } else if (baseDelta(data, 4, 2, out_data)) {
+    *out_compression = BASE4_DELTA2;
+  } else if (baseDelta(data, 8, 4, out_data)) {
+    *out_compression = BASE8_DELTA4;
+  }
 
-      case BASE8_DELTA2: break;
-      case BASE8_DELTA4: break;
-      case BASE4_DELTA1: break;
-      case BASE4_DELTA2: break;
-      case BASE2_DELTA1: break;
-      case NO_COMPRESS:
-      default:
-        out_data->resize(data.size());
-        for (int i = 0; i < out_data->size(); i++) {
-          out_data->at(i) = data[i];
-        }
-        *out_compression = NO_COMPRESS;
-    }
+  // nothing worked!
+  else {
+    out_data->resize(data.size());
+    for (int i = 0; i < out_data->size(); i++)
+      out_data->at(i) = data[i];
+    *out_compression = NO_COMPRESS;
   }
 }
 
@@ -147,6 +145,38 @@ bool Compressor::allSame(const vector<byte_t>& line, segment_t* out_value) {
     segment_t test = read_bytes(line, i, size);
     if (test != value) return false;
   }
+  return true;
+}
+
+// This function does the heavy lifting for the compression logic.
+// For a given base and delta size, it determines whether or not the line can
+// be compressed, and if so, the resulting cache line.
+// Note: out_line is only written to if compression was successful.
+bool Compressor::baseDelta(const vector<byte_t>& line,
+    size_t base_size, size_t delta_size, vector<byte_t>* out_line) {
+  // determine the bounds for the deltas
+  size_t shift = ((sizeof(delta_t) - delta_size)* BITS_IN_BYTE);
+  delta_t delta_max = LLONG_MAX >> shift;
+  delta_t delta_min = LLONG_MIN >> shift;
+
+  // base is the first value
+  segment_t base = read_bytes(line, 0, base_size);
+
+  // make sure all deltas are in correct range
+  vector<delta_t> deltas;
+  for (int offset = 0; offset < line.size(); offset += base_size) {
+    segment_t value = read_bytes(line, offset, base_size);
+    delta_t delta = (delta_t)(value - base); // this should be pretty safe
+    if (delta < delta_min || delta > delta_max)
+      return false;
+    deltas.push_back(delta);
+  }
+
+  // write the compressed cache line
+  out_line->resize(base_size + (deltas.size() * delta_size));
+  write_bytes(base, 0, base_size, out_line);
+  for (int i = 0; i < deltas.size(); i++)
+    write_bytes(deltas[i], base_size + (i * delta_size), delta_size, out_line);
   return true;
 }
 

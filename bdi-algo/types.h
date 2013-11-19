@@ -1,9 +1,12 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
-typedef unsigned char byte_t;          // 1 byte
-typedef unsigned long long data_t;     // 8 bytes
-typedef unsigned long long segment_t;  // 8 bytes
-typedef unsigned long long pointer_t;  // 64 bits
+#include <cstdint>
+
+typedef uint8_t  byte_t;     // 1 byte
+typedef uint64_t data_t;     // 8 bytes
+typedef int64_t  delta_t;    // 8 bytes
+typedef uint64_t segment_t;  // 8 bytes
+typedef uint64_t pointer_t;  // 64 bits
 
 #endif

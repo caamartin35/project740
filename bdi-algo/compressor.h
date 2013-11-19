@@ -1,6 +1,7 @@
 #ifndef __COMPRESSOR_H__
 #define __COMPRESSOR_H__
 
+#include <climits>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -37,6 +38,7 @@ class Compressor {
   void compress(const std::vector<byte_t>& data, std::vector<byte_t>* out_data, compression_t* out_compression);
   bool allZeros(const std::vector<byte_t>& line);
   bool allSame(const std::vector<byte_t>& line, segment_t* out_value);
+  bool baseDelta(const std::vector<byte_t>& line, size_t base_size, size_t delta_size, std::vector<byte_t>* out_line);
   // tag setup
   void setup_tags();
   // dimensions
