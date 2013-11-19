@@ -12,8 +12,8 @@
 #define PATH_TO_TRACE_DIR    "../traces/outputs/"
 #define TOKEN_LOAD           "LD"
 #define TOKEN_STORE          "ST"
-#define CACHE_SIZE           1024 //(1 << 21)
-#define CACHE_WAYS           4    //16
+#define CACHE_SIZE           512  //(1 << 21)
+#define CACHE_WAYS           2    //16
 #define CACHE_BSIZE          32   //64
 
 #endif

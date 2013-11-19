@@ -36,6 +36,8 @@ int main(int argc, char const *argv[]) {
     } else if (type == TOKEN_STORE) {
       compressor.Store(address, size, data);
     }
+    // cycle the compressor
+    compressor.Cycle();
   }
 
   // print out the results
