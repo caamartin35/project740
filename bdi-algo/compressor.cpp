@@ -17,7 +17,10 @@ Compressor::Compressor(int size, int ways, int block_size) {
   tag_bits = (sizeof(pointer_t) * BITS_IN_BYTE) - set_bits - bib_bits;
 
   // allocate cache memory
-  setup_tags();
+  tag_store.resize(sets);
+  for (int i = 0; i < tag_store.size(); i++) {
+    tag_store[i].resize(2 * ways);  // twice as many tags
+  }
   data_store.resize(sets);
   for (int i = 0; i < data_store.size(); i++) {
     data_store[i].resize(block_size);
@@ -30,16 +33,16 @@ Compressor::Compressor(int size, int ways, int block_size) {
 }
 
 void Compressor::Load(pointer_t address, size_t size, data_t data) {
-  // pointer_t index = get_set(address);
-  // pointer_t tag = get_tag(address);
+  // pointer_t index = getSet(address);
+  // pointer_t tag = getTag(address);
   // vector<Line>& set = cache[index];
   // Line* line = contains(set, tag);
 }
 
 void Compressor::Store(pointer_t address, size_t size, data_t data) {
-  int index = get_set(address);
+  int index = getSet(address);
   vector<Tag>& tags = tag_store[index];
-  pointer_t needle = get_tag(address);
+  pointer_t needle = getTag(address);
   Tag *tag = contains(tags, needle);
   if (!tag) {
     misses++;
@@ -66,21 +69,30 @@ void Compressor::Cycle() {
 // BDI related helpers.
 //
 void Compressor::insert(pointer_t address, size_t size, data_t data) {
-  // int index = get_set(address);
-  int bib = get_bib(address);
+  int index = getSet(address);
+  int bib = getBib(address);
   // set up the line for compression (we know its uncompressed size)
   vector<byte_t> uncompressed(block_size);
   vector<byte_t> compressed;
   compression_t type;
-  write_bytes(data, bib, size, &uncompressed);
+  writeBytes(data, bib, size, &uncompressed);
+  compress(uncompressed, &compressed, &type);
+
+  // print some stuff out for now
   for (int i = 0; i < uncompressed.size(); i++)
     cout << std::setw(2) << std::setfill('0') << std::hex << (int)uncompressed[i] << " ";
   cout << endl;
-
-  compress(uncompressed, &compressed, &type);
   for (int i = 0; i < compressed.size(); i++)
     cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
   cout << endl;
+
+  // allocate space for the compressed cache line
+  // int new_size = compressed.size();
+  vector<bool> segmentsUsed((ways * block_size) / sizeof(segment_t));
+  const vector<Tag>& tags = tag_store[index];
+  for (int i = 0; i < tags.size(); i++) {
+    // if
+  }
 }
 
 
@@ -100,7 +112,7 @@ void Compressor::compress(const vector<byte_t>& data,
   segment_t rep_value;
   if (allSame(data, &rep_value)) {
     out_data->resize(sizeof(segment_t));
-    write_bytes(rep_value, 0, sizeof(segment_t), out_data);
+    writeBytes(rep_value, 0, sizeof(segment_t), out_data);
     *out_compression = REP_VALUES;
     return;
   }
@@ -140,9 +152,9 @@ bool Compressor::allSame(const vector<byte_t>& line, segment_t* out_value) {
   int size = sizeof(segment_t);
   if (line.size() <= size) return true;
   // common case
-  segment_t value = read_bytes(line, 0, size);
+  segment_t value = readBytes(line, 0, size);
   for (int i = 0; i < line.size(); i += size) {
-    segment_t test = read_bytes(line, i, size);
+    segment_t test = readBytes(line, i, size);
     if (test != value) return false;
   }
   return true;
@@ -160,12 +172,12 @@ bool Compressor::baseDelta(const vector<byte_t>& line,
   delta_t delta_min = LLONG_MIN >> shift;
 
   // base is the first value
-  segment_t base = read_bytes(line, 0, base_size);
+  segment_t base = readBytes(line, 0, base_size);
 
   // make sure all deltas are in correct range
   vector<delta_t> deltas;
   for (int offset = 0; offset < line.size(); offset += base_size) {
-    segment_t value = read_bytes(line, offset, base_size);
+    segment_t value = readBytes(line, offset, base_size);
     delta_t delta = (delta_t)(value - base); // this should be pretty safe
     if (delta < delta_min || delta > delta_max)
       return false;
@@ -174,9 +186,9 @@ bool Compressor::baseDelta(const vector<byte_t>& line,
 
   // write the compressed cache line
   out_line->resize(base_size + (deltas.size() * delta_size));
-  write_bytes(base, 0, base_size, out_line);
+  writeBytes(base, 0, base_size, out_line);
   for (int i = 0; i < deltas.size(); i++)
-    write_bytes(deltas[i], base_size + (i * delta_size), delta_size, out_line);
+    writeBytes(deltas[i], base_size + (i * delta_size), delta_size, out_line);
   return true;
 }
 
@@ -187,7 +199,7 @@ void Compressor::decompress(const Tag& tag, vector<byte_t>* out_data) {
 // This function writes the bytes in the little endian format.
 // The most we can read out from a line at a time is 8 bytes.
 // @param {size_t} length The length to read out in bytes.
-segment_t Compressor::read_bytes(const vector<byte_t>& line, int offset, size_t length) {
+segment_t Compressor::readBytes(const vector<byte_t>& line, int offset, size_t length) {
   segment_t data = 0x0;
   for (int i = offset; i < length && i < line.size(); i++) {
     byte_t byte = line[i];
@@ -196,7 +208,7 @@ segment_t Compressor::read_bytes(const vector<byte_t>& line, int offset, size_t 
   return data;
 }
 
-void Compressor::write_bytes(data_t data, int offset, size_t length, vector<byte_t>* line) {
+void Compressor::writeBytes(data_t data, int offset, size_t length, vector<byte_t>* line) {
   data_t masked_data = data & mask(length * BITS_IN_BYTE);
   for (int i = offset; i < length && i < line->size(); i++) {
     byte_t byte = (byte_t) (masked_data & 0xFF);
@@ -216,38 +228,17 @@ Tag* Compressor::contains(vector<Tag>& tags, pointer_t needle) {
 
 
 //
-// Tag set up
-//
-void Compressor::setup_tags() {
-  tag_store.resize(sets);
-  for (int i = 0; i < tag_store.size(); i++) {
-    tag_store[i].resize(2 * ways);  // twice as many tags
-    for (int j = 0; j < tag_store[i].size(); j++) {
-      Tag* tag = &tag_store[i][j];
-      switch (j) {
-        case 0: tag->SetInterval(6, 8); break;
-        case 1: tag->SetInterval(5, 6); break;
-        case 2: tag->SetInterval(2, 5); break;
-        case 3: tag->SetInterval(0, 2); break;
-        default: tag->SetInterval(SEGMENT_NONE, SEGMENT_NONE);
-      }
-    }
-  }
-}
-
-
-//
 // Cache related helpers.
 //
-pointer_t Compressor::get_tag(pointer_t address) {
+pointer_t Compressor::getTag(pointer_t address) {
   return ((address >> set_bits) >> bib_bits) & mask(tag_bits);
 }
 
-pointer_t Compressor::get_set(pointer_t address) {
+pointer_t Compressor::getSet(pointer_t address) {
   return (address >> bib_bits) & mask(set_bits);
 }
 
-pointer_t Compressor::get_bib(pointer_t address) {
+pointer_t Compressor::getBib(pointer_t address) {
   return address & mask(bib_bits);
 }
 

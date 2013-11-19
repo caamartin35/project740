@@ -30,8 +30,8 @@ class Compressor {
 
  private:
   void insert(pointer_t address, size_t size, data_t data);
-  segment_t read_bytes(const std::vector<byte_t>& line, int offset, size_t length);
-  void write_bytes(data_t data, int offset, size_t length, std::vector<byte_t>* line);
+  segment_t readBytes(const std::vector<byte_t>& line, int offset, size_t length);
+  void writeBytes(data_t data, int offset, size_t length, std::vector<byte_t>* line);
   Tag* contains(std::vector<Tag>& tags, pointer_t needle);
   // compression
   void decompress(const Tag& tag, std::vector<byte_t>* out_data);
@@ -39,12 +39,10 @@ class Compressor {
   bool allZeros(const std::vector<byte_t>& line);
   bool allSame(const std::vector<byte_t>& line, segment_t* out_value);
   bool baseDelta(const std::vector<byte_t>& line, size_t base_size, size_t delta_size, std::vector<byte_t>* out_line);
-  // tag setup
-  void setup_tags();
   // dimensions
-  pointer_t get_tag(pointer_t address);
-  pointer_t get_set(pointer_t address);
-  pointer_t get_bib(pointer_t address);
+  pointer_t getTag(pointer_t address);
+  pointer_t getSet(pointer_t address);
+  pointer_t getBib(pointer_t address);
   pointer_t mask(int len);
   int log2(int n);
   // save some bit-math
