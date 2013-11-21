@@ -47,6 +47,11 @@ void Compressor::Load(pointer_t address, size_t size, data_t data) {
     const vector<byte_t>& data = data_store[index];
     vector<byte_t> uncompressed(block_size);
     decompress(*tag, data, &uncompressed);
+
+    // print?
+    for (int i = 0; i < uncompressed.size(); i++)
+      cout << std::setw(2) << std::setfill('0') << std::hex << (int)uncompressed[i] << " ";
+    cout << std::dec << endl;
   }
 }
 
@@ -67,18 +72,55 @@ void Compressor::decompress(const Tag& tag,
     cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
   cout << std::dec << endl;
 
+  // create decompressed line
+  segment_t base;
+  out_data->resize(block_size);
   switch (tag.mode) {
     case ZEROS:
+      for (int i = 0; i < out_data->size(); i++)
+        out_data->at(i) = 0x00;
+      break;
     case REP_VALUES:
-    case BASE8_DELTA1:
-    case BASE8_DELTA2:
-    case BASE8_DELTA4:
-    case BASE4_DELTA1:
-    case BASE4_DELTA2:
-    case BASE2_DELTA1:
+      base = readBytes(compressed, 0, BASE8);
+      for (int i = 0; i < out_data->size() / BASE8; i++)
+        writeBytes(base, i * BASE8, BASE8, out_data);
+      break;
+    case BASE8_DELTA1: unpackBaseDelta(compressed, BASE8, DELTA1, out_data);
+      break;
+    case BASE8_DELTA2: unpackBaseDelta(compressed, BASE8, DELTA2, out_data);
+      break;
+    case BASE8_DELTA4: unpackBaseDelta(compressed, BASE8, DELTA4, out_data);
+      break;
+    case BASE4_DELTA1: unpackBaseDelta(compressed, BASE4, DELTA1, out_data);
+      break;
+    case BASE4_DELTA2: unpackBaseDelta(compressed, BASE4, DELTA2, out_data);
+      break;
+    case BASE2_DELTA1: unpackBaseDelta(compressed, BASE2, DELTA1, out_data);
+      break;
     case NO_COMPRESS:
     default:
-      return;
+      copy(compressed, 0, out_data, 0, compressed.size());
+  }
+}
+
+void Compressor::unpackBaseDelta(const vector<byte_t> compressed,
+    size_t base_size, size_t delta_size, vector<byte_t>* out_data) {
+  // grab base, decompress
+  segment_t base = readBytes(compressed, 0, base_size);
+  int num_deltas = (compressed.size() - base_size) / delta_size;
+
+  // extract sign extended deltas
+  for (int i = 0; i < num_deltas; i++) {
+
+    // bit math to sign extend
+    int offset = base_size + (i * delta_size);
+    int shift = ((sizeof(segment_t) - delta_size) * BITS_IN_BYTE);
+    segment_t unsigned_delta = readBytes(compressed, offset, delta_size);
+    delta_t delta = ((delta_t)(unsigned_delta << shift)) >> shift;
+
+    // store into decompressed line
+    segment_t value = base + delta;
+    writeBytes(value, i * base_size, base_size, out_data);
   }
 }
 
@@ -183,17 +225,17 @@ void Compressor::compress(const vector<byte_t>& data,
   }
 
   // general cases for base + delta compression
-  if (baseDelta(data, 8, 1, out_data)) {
+  if (packBaseDelta(data, 8, 1, out_data)) {
     *out_compression = BASE8_DELTA1;
-  } else if (baseDelta(data, 4, 1, out_data)) {
+  } else if (packBaseDelta(data, 4, 1, out_data)) {
     *out_compression = BASE4_DELTA1;
-  } else if (baseDelta(data, 8, 2, out_data)) {
+  } else if (packBaseDelta(data, 8, 2, out_data)) {
     *out_compression = BASE8_DELTA2;
-  } else if (baseDelta(data, 2, 1, out_data)) {
+  } else if (packBaseDelta(data, 2, 1, out_data)) {
     *out_compression = BASE2_DELTA1;
-  } else if (baseDelta(data, 4, 2, out_data)) {
+  } else if (packBaseDelta(data, 4, 2, out_data)) {
     *out_compression = BASE4_DELTA2;
-  } else if (baseDelta(data, 8, 4, out_data)) {
+  } else if (packBaseDelta(data, 8, 4, out_data)) {
     *out_compression = BASE8_DELTA4;
   }
 
@@ -229,7 +271,7 @@ bool Compressor::allSame(const vector<byte_t>& line, segment_t* out_value) {
 // For a given base and delta size, it determines whether or not the line can
 // be compressed, and if so, the resulting cache line.
 // Note: out_line is only written to if compression was successful.
-bool Compressor::baseDelta(const vector<byte_t>& line,
+bool Compressor::packBaseDelta(const vector<byte_t>& line,
     size_t base_size, size_t delta_size, vector<byte_t>* out_line) {
   // determine the bounds for the deltas
   size_t shift = ((sizeof(delta_t) - delta_size)* BITS_IN_BYTE);

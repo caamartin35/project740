@@ -5,10 +5,16 @@
 
 #include "types.h"
 
-#define SEGMENT_NONE -1
-#define SEGMENT_SIZE 8
-#define SIZE_INVALID -1
-#define COMPRESSION_TYPES 9
+#define BASE2              2
+#define BASE4              4
+#define BASE8              8
+#define DELTA1             1
+#define DELTA2             2
+#define DELTA4             4
+#define SEGMENT_NONE      -1
+#define SEGMENT_SIZE       8
+#define SIZE_INVALID      -1
+#define COMPRESSION_TYPES  9
 
 typedef enum {
   ZEROS,

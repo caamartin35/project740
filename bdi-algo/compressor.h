@@ -32,7 +32,8 @@ class Compressor {
   void compress(const std::vector<byte_t>& data, std::vector<byte_t>* out_data, compression_t* out_compression);
   bool allZeros(const std::vector<byte_t>& line);
   bool allSame(const std::vector<byte_t>& line, segment_t* out_value);
-  bool baseDelta(const std::vector<byte_t>& line, size_t base_size, size_t delta_size, std::vector<byte_t>* out_line);
+  bool packBaseDelta(const std::vector<byte_t>& line, size_t base_size, size_t delta_size, std::vector<byte_t>* out_line);
+  void unpackBaseDelta(const std::vector<byte_t> compressed, size_t base, size_t delta, std::vector<byte_t>* out_data);
   // helpers
   void insert(pointer_t address, size_t size, data_t data);
   size_t evict(std::vector<Tag>* tags, std::vector<byte_t>* data);
