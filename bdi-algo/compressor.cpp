@@ -55,75 +55,6 @@ void Compressor::Load(pointer_t address, size_t size, data_t data) {
   }
 }
 
-void Compressor::decompress(const Tag& tag,
-    const vector<byte_t>& data, vector<byte_t>* out_data) {
-  // this should not happen.
-  if (!tag.valid) {
-    std::cerr << "[cmp] Decompress on invalid tag.";
-    return;
-  }
-
-  // copy the compressed data from data_store
-  vector<byte_t> compressed(tag.size);
-  copy(data, tag.seg_start * SEGMENT_SIZE, &compressed, 0, tag.size);
-
-  // see the round trip stuff
-  for (int i = 0; i < compressed.size(); i++)
-    cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
-  cout << std::dec << endl;
-
-  // create decompressed line
-  segment_t base;
-  out_data->resize(block_size);
-  switch (tag.mode) {
-    case ZEROS:
-      for (int i = 0; i < out_data->size(); i++)
-        out_data->at(i) = 0x00;
-      break;
-    case REP_VALUES:
-      base = readBytes(compressed, 0, BASE8);
-      for (int i = 0; i < out_data->size() / BASE8; i++)
-        writeBytes(base, i * BASE8, BASE8, out_data);
-      break;
-    case BASE8_DELTA1: unpackBaseDelta(compressed, BASE8, DELTA1, out_data);
-      break;
-    case BASE8_DELTA2: unpackBaseDelta(compressed, BASE8, DELTA2, out_data);
-      break;
-    case BASE8_DELTA4: unpackBaseDelta(compressed, BASE8, DELTA4, out_data);
-      break;
-    case BASE4_DELTA1: unpackBaseDelta(compressed, BASE4, DELTA1, out_data);
-      break;
-    case BASE4_DELTA2: unpackBaseDelta(compressed, BASE4, DELTA2, out_data);
-      break;
-    case BASE2_DELTA1: unpackBaseDelta(compressed, BASE2, DELTA1, out_data);
-      break;
-    case NO_COMPRESS:
-    default:
-      copy(compressed, 0, out_data, 0, compressed.size());
-  }
-}
-
-void Compressor::unpackBaseDelta(const vector<byte_t> compressed,
-    size_t base_size, size_t delta_size, vector<byte_t>* out_data) {
-  // grab base, decompress
-  segment_t base = readBytes(compressed, 0, base_size);
-  int num_deltas = (compressed.size() - base_size) / delta_size;
-
-  // extract sign extended deltas
-  for (int i = 0; i < num_deltas; i++) {
-
-    // bit math to sign extend
-    int offset = base_size + (i * delta_size);
-    int shift = ((sizeof(segment_t) - delta_size) * BITS_IN_BYTE);
-    segment_t unsigned_delta = readBytes(compressed, offset, delta_size);
-    delta_t delta = ((delta_t)(unsigned_delta << shift)) >> shift;
-
-    // store into decompressed line
-    segment_t value = base + delta;
-    writeBytes(value, i * base_size, base_size, out_data);
-  }
-}
-
 void Compressor::Store(pointer_t address, size_t size, data_t data) {
   int index = getSet(address);
   vector<Tag>* tags = &tag_store[index];
@@ -248,28 +179,59 @@ void Compressor::compress(const vector<byte_t>& data,
   }
 }
 
-bool Compressor::allZeros(const vector<byte_t>& line) {
-  for (int i = 0; i < line.size(); i++) {
-    if (line[i]) return false;
+void Compressor::decompress(const Tag& tag,
+    const vector<byte_t>& data, vector<byte_t>* out_data) {
+  // this should not happen.
+  if (!tag.valid) {
+    std::cerr << "[cmp] Decompress on invalid tag.";
+    return;
   }
-  return true;
+
+  // copy the compressed data from data_store
+  vector<byte_t> compressed(tag.size);
+  copy(data, tag.seg_start * SEGMENT_SIZE, &compressed, 0, tag.size);
+
+  // see the round trip stuff
+  for (int i = 0; i < compressed.size(); i++)
+    cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
+  cout << std::dec << endl;
+
+  // create decompressed line
+  segment_t base;
+  out_data->resize(block_size);
+  switch (tag.mode) {
+    case ZEROS:
+      for (int i = 0; i < out_data->size(); i++)
+        out_data->at(i) = 0x00;
+      break;
+    case REP_VALUES:
+      base = readBytes(compressed, 0, BASE8);
+      for (int i = 0; i < out_data->size() / BASE8; i++)
+        writeBytes(base, i * BASE8, BASE8, out_data);
+      break;
+    case BASE8_DELTA1: unpackBaseDelta(compressed, BASE8, DELTA1, out_data);
+      break;
+    case BASE8_DELTA2: unpackBaseDelta(compressed, BASE8, DELTA2, out_data);
+      break;
+    case BASE8_DELTA4: unpackBaseDelta(compressed, BASE8, DELTA4, out_data);
+      break;
+    case BASE4_DELTA1: unpackBaseDelta(compressed, BASE4, DELTA1, out_data);
+      break;
+    case BASE4_DELTA2: unpackBaseDelta(compressed, BASE4, DELTA2, out_data);
+      break;
+    case BASE2_DELTA1: unpackBaseDelta(compressed, BASE2, DELTA1, out_data);
+      break;
+    case NO_COMPRESS:
+    default:
+      copy(compressed, 0, out_data, 0, compressed.size());
+  }
 }
 
-bool Compressor::allSame(const vector<byte_t>& line, segment_t* out_value) {
-  int size = sizeof(segment_t); // not SEGMENT_SIZE (avoid nasty type resize error)
-  if (line.size() <= size) return true;
-  // common case
-  segment_t value = readBytes(line, 0, size);
-  for (int i = 0; i < line.size(); i += size) {
-    segment_t test = readBytes(line, i, size);
-    if (test != value) return false;
-  }
-  return true;
-}
 
-// This function does the heavy lifting for the compression logic.
-// For a given base and delta size, it determines whether or not the line can
-// be compressed, and if so, the resulting cache line.
+//
+// General case Base + Delta compression logic.
+//
+
 // Note: out_line is only written to if compression was successful.
 bool Compressor::packBaseDelta(const vector<byte_t>& line,
     size_t base_size, size_t delta_size, vector<byte_t>* out_line) {
@@ -299,41 +261,49 @@ bool Compressor::packBaseDelta(const vector<byte_t>& line,
   return true;
 }
 
+void Compressor::unpackBaseDelta(const vector<byte_t> compressed,
+    size_t base_size, size_t delta_size, vector<byte_t>* out_data) {
+  // grab base, decompress
+  segment_t base = readBytes(compressed, 0, base_size);
+  int num_deltas = (compressed.size() - base_size) / delta_size;
+
+  // extract sign extended deltas
+  for (int i = 0; i < num_deltas; i++) {
+
+    // bit math to sign extend
+    int offset = base_size + (i * delta_size);
+    int shift = ((sizeof(segment_t) - delta_size) * BITS_IN_BYTE);
+    segment_t unsigned_delta = readBytes(compressed, offset, delta_size);
+    delta_t delta = ((delta_t)(unsigned_delta << shift)) >> shift;
+
+    // store into decompressed line
+    segment_t value = base + delta;
+    writeBytes(value, i * base_size, base_size, out_data);
+  }
+}
+
+bool Compressor::allZeros(const vector<byte_t>& line) {
+  for (int i = 0; i < line.size(); i++) {
+    if (line[i]) return false;
+  }
+  return true;
+}
+
+bool Compressor::allSame(const vector<byte_t>& line, segment_t* out_value) {
+  int size = sizeof(segment_t); // not SEGMENT_SIZE (avoid nasty type resize error)
+  if (line.size() <= size) return true;
+  // common case
+  segment_t value = readBytes(line, 0, size);
+  for (int i = 0; i < line.size(); i += size) {
+    segment_t test = readBytes(line, i, size);
+    if (test != value) return false;
+  }
+  return true;
+}
 
 //
-// Reading writing and copying data
+// Tag related helpers.
 //
-void Compressor::copy(const vector<byte_t>& src, int src_off, vector<byte_t>* dest,
-     int dest_off, int length) {
-  // bounds checking
-  if (src_off + length > src.size()) return;
-  if (dest_off + length > dest->size()) return;
-  // general case
-  for (int i = 0; i < length; i++) {
-    dest->at(dest_off + i) = src[src_off + i];
-  }
-}
-
-// This function writes the bytes in the little endian format.
-// The most we can read out from a line at a time is 8 bytes.
-// @param {size_t} length The length to read out in bytes.
-segment_t Compressor::readBytes(const vector<byte_t>& line, int offset, size_t length) {
-  segment_t data = 0x0;
-  for (int i = offset; i < offset + length && i < line.size(); i++) {
-    byte_t byte = line[i];
-    data = (byte << (BITS_IN_BYTE * (i - offset))) | data;
-  }
-  return data;
-}
-
-void Compressor::writeBytes(data_t data, int offset, size_t length, vector<byte_t>* out_line) {
-  data_t masked_data = data & mask(length * BITS_IN_BYTE);
-  for (int i = offset; i < offset + length && i < out_line->size(); i++) {
-    byte_t byte = (byte_t) (masked_data & 0xFF);
-    out_line->at(i) = byte;
-    masked_data >>= BITS_IN_BYTE;
-  }
-}
 
 Tag* Compressor::contains(vector<Tag>* tags, pointer_t needle) {
   for (int i = 0; i < tags->size(); i++) {
@@ -353,7 +323,7 @@ Tag* Compressor::allocateTag(vector<Tag>* tags) {
 
 
 //
-// Cache related helpers.
+// Dimension related helpers.
 //
 pointer_t Compressor::getTag(pointer_t address) {
   return ((address >> set_bits) >> bib_bits) & mask(tag_bits);
@@ -365,22 +335,6 @@ pointer_t Compressor::getSet(pointer_t address) {
 
 pointer_t Compressor::getBib(pointer_t address) {
   return address & mask(bib_bits);
-}
-
-pointer_t Compressor::mask(int len) {
-  pointer_t mask = 0x0;
-  while (len--) {
-    mask = (mask << 1) | 0x1;
-  }
-  return mask;
-}
-
-int Compressor::log2(int n) {
-  int i = 0;
-  while (n >>= 1) {
-    i++;
-  }
-  return i;
 }
 
 
