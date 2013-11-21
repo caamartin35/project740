@@ -49,9 +49,7 @@ void Compressor::Store(pointer_t address, size_t size, data_t data) {
     insert(address, size, data);
   } else {
     hits++;
-    tag->age = 0;
-    tag->tag = needle;
-    // uncompress, store, compress
+    insert(address, size, data);
   }
 }
 
@@ -223,7 +221,7 @@ void Compressor::decompress(const Tag& tag, vector<byte_t>* out_data) {
 // @param {size_t} length The length to read out in bytes.
 segment_t Compressor::readBytes(const vector<byte_t>& line, int offset, size_t length) {
   segment_t data = 0x0;
-  for (int i = offset; i < length && i < line.size(); i++) {
+  for (int i = offset; i < offset + length && i < line.size(); i++) {
     byte_t byte = line[i];
     data = (byte << (BITS_IN_BYTE * (i - offset))) | data;
   }
@@ -232,7 +230,7 @@ segment_t Compressor::readBytes(const vector<byte_t>& line, int offset, size_t l
 
 void Compressor::writeBytes(data_t data, int offset, size_t length, vector<byte_t>* line) {
   data_t masked_data = data & mask(length * BITS_IN_BYTE);
-  for (int i = offset; i < length && i < line->size(); i++) {
+  for (int i = offset; i < offset + length && i < line->size(); i++) {
     byte_t byte = (byte_t) (masked_data & 0xFF);
     line->at(i) = byte;
     masked_data >>= BITS_IN_BYTE;
