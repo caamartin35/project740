@@ -32,6 +32,15 @@ Compressor::Compressor(int size, int ways, int block_size) {
   evictions = 0;
 }
 
+void Compressor::Cycle() {
+  for (int i = 0; i < tag_store.size(); i++) {
+    vector<Tag>* tags = &tag_store[i];
+    for (int j = 0; j < tags->size(); j++) {
+      tags->at(j).age++;
+    }
+  }
+}
+
 void Compressor::Load(pointer_t address, size_t size, data_t data) {
   pointer_t index = getSet(address);
   pointer_t tag_value = getTag(address);
@@ -39,19 +48,10 @@ void Compressor::Load(pointer_t address, size_t size, data_t data) {
   Tag* tag = contains(tags, tag_value);
   if (!tag) {
     misses++;
-    // insert()
+    insert(address, size, data);
   } else {
     hits++;
     tag->age = 0;
-    // dont need to do anything, but w/e
-    const vector<byte_t>& data = data_store[index];
-    vector<byte_t> uncompressed(block_size);
-    decompress(*tag, data, &uncompressed);
-
-    // print?
-    for (int i = 0; i < uncompressed.size(); i++)
-      cout << std::setw(2) << std::setfill('0') << std::hex << (int)uncompressed[i] << " ";
-    cout << std::dec << endl;
   }
 }
 
@@ -69,70 +69,95 @@ void Compressor::Store(pointer_t address, size_t size, data_t data) {
   }
 }
 
-void Compressor::Cycle() {
-  for (int i = 0; i < tag_store.size(); i++) {
-    vector<Tag>* tags = &tag_store[i];
-    for (int j = 0; j < tags->size(); j++) {
-      tags->at(j).age++;
-    }
-  }
-}
-
 
 //
 // BDI related helpers.
 //
-void Compressor::insert(pointer_t address, size_t size, data_t data) {
-  int index = getSet(address);
-  int bib = getBib(address);
 
-  // set up the line for compression (we know its uncompressed size)
-  // remember to decompress first!
+void Compressor::insert(pointer_t address, size_t size, data_t data) {
+  // get basic information
+  pointer_t index = getSet(address);
+  pointer_t bib = getBib(address);
+  pointer_t tag_value = getTag(address);
+
+  // get tags and data
+  vector<byte_t>* data_array = &data_store[index];
+  vector<Tag>* tags = &tag_store[index];
+  Tag* tag = contains(tags, tag_value);
+
+  // if this block is in the cache, decompress, then write.
   vector<byte_t> uncompressed(block_size);
   vector<byte_t> compressed;
   compression_t mode;
+  if (tag) {
+    decompress(*tag, *data_array, &uncompressed);
+    tag->valid = false; // may need to find new home
+  }
   writeBytes(data, bib, size, &uncompressed);
   compress(uncompressed, &compressed, &mode);
 
-  // print some stuff out for now
-  for (int i = 0; i < uncompressed.size(); i++)
-    cout << std::setw(2) << std::setfill('0') << std::hex << (int)uncompressed[i] << " ";
-  cout << std::dec << endl;
-  for (int i = 0; i < compressed.size(); i++)
-    cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
-  cout << std::dec << endl;
-
   // Are there any invalid tags? If not we need to evict.
-  vector<Tag>* tags = &tag_store[index];
-  vector<byte_t>* data_array = &data_store[index];
-  Tag* tag = allocateTag(tags);
+  tag = allocateTag(tags);
   if (!tag) {
-    //evict()
-    // tag = allocateTag(tags);
+    evict(tags);
+    tag = allocateTag(tags);
   }
 
   // allocate continuous segments for compressed cache line
-  // int new_size = compressed.size();
-  int space = data_array->size();
-  int start = data_array->size() - space;
-  int start_seg = start / SEGMENT_SIZE;
-  // for (int i = 0; i < tags->size(); i++) {
-  //   if (tags->at(i).valid)
-  //     space -= tags->at(i).size_aligned;
-  // }
-  // while (new_size > space) {
-  //   space += evict()
-  // }
+  size_t new_size = align(compressed.size(), SEGMENT_SIZE);
+  int start_seg;
+  while ((start_seg = space(*tags, new_size)) < 0) {
+    evict(tags);
+  }
+  int start = start_seg * SEGMENT_SIZE;
 
+  // finally copy the data in and init the tag
   tag->Allocate(getTag(address), mode, start_seg);
+  tag->age = 0;
   copy(compressed, 0, data_array, start, tag->size);
 }
 
-
-size_t Compressor::evict(vector<Tag>* tags, vector<byte_t>* data) {
-  return 0;
+// if every block is invalid, this does nothing
+void Compressor::evict(vector<Tag>* tags) {
+  Tag* oldest = NULL;
+  for (int i = 0; i < tags->size(); i++) {
+    Tag* tag = &tags->at(i);
+    if (tag->valid && (!oldest || oldest->age < tag->age))
+      oldest = tag;
+  }
+  // evict this tag
+  oldest->valid = false;
+  evictions++;
 }
 
+int Compressor::space(const vector<Tag>& tags, size_t size) {
+  int num_segs = block_size / SEGMENT_SIZE;
+  int start = -1;
+  size_t space = 0;
+  for (int seg = 0; seg < num_segs; seg++) {
+    if (!used(tags, seg)) {
+      if (space == 0)
+        start = seg;
+      space += SEGMENT_SIZE;
+    } else {
+      space = 0;
+    }
+    // if we have enough space, return the start index
+    if (space >= size)
+      return start;
+  }
+  return -1;
+}
+
+bool Compressor::used(const vector<Tag>& tags, int segment) {
+  for (int j = 0; j < tags.size(); j++) {
+    const Tag& tag = tags[j];
+    if (tag.valid &&
+        tag.seg_start <= segment && segment < tag.seg_start + tag.size_seg)
+      return true;
+  }
+  return false;
+}
 
 // Take in a byte vector and try to compress it.
 // The out_compression variable contains the compressed cache line.
@@ -156,17 +181,17 @@ void Compressor::compress(const vector<byte_t>& data,
   }
 
   // general cases for base + delta compression
-  if (packBaseDelta(data, 8, 1, out_data)) {
+  if (packBaseDelta(data, BASE8, DELTA1, out_data)) {
     *out_compression = BASE8_DELTA1;
-  } else if (packBaseDelta(data, 4, 1, out_data)) {
+  } else if (packBaseDelta(data, BASE4, DELTA1, out_data)) {
     *out_compression = BASE4_DELTA1;
-  } else if (packBaseDelta(data, 8, 2, out_data)) {
+  } else if (packBaseDelta(data, BASE8, DELTA2, out_data)) {
     *out_compression = BASE8_DELTA2;
-  } else if (packBaseDelta(data, 2, 1, out_data)) {
+  } else if (packBaseDelta(data, BASE2, DELTA1, out_data)) {
     *out_compression = BASE2_DELTA1;
-  } else if (packBaseDelta(data, 4, 2, out_data)) {
+  } else if (packBaseDelta(data, BASE4, DELTA2, out_data)) {
     *out_compression = BASE4_DELTA2;
-  } else if (packBaseDelta(data, 8, 4, out_data)) {
+  } else if (packBaseDelta(data, BASE8, DELTA4, out_data)) {
     *out_compression = BASE8_DELTA4;
   }
 
@@ -190,11 +215,6 @@ void Compressor::decompress(const Tag& tag,
   // copy the compressed data from data_store
   vector<byte_t> compressed(tag.size);
   copy(data, tag.seg_start * SEGMENT_SIZE, &compressed, 0, tag.size);
-
-  // see the round trip stuff
-  for (int i = 0; i < compressed.size(); i++)
-    cout << std::setw(2) << std::setfill('0') << std::hex << (int)compressed[i] << " ";
-  cout << std::dec << endl;
 
   // create decompressed line
   segment_t base;
@@ -282,6 +302,11 @@ void Compressor::unpackBaseDelta(const vector<byte_t> compressed,
   }
 }
 
+
+//
+// Special case compression
+//
+
 bool Compressor::allZeros(const vector<byte_t>& line) {
   for (int i = 0; i < line.size(); i++) {
     if (line[i]) return false;
@@ -325,6 +350,7 @@ Tag* Compressor::allocateTag(vector<Tag>* tags) {
 //
 // Dimension related helpers.
 //
+
 pointer_t Compressor::getTag(pointer_t address) {
   return ((address >> set_bits) >> bib_bits) & mask(tag_bits);
 }

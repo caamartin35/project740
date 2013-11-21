@@ -37,7 +37,9 @@ class Compressor {
   void unpackBaseDelta(const std::vector<byte_t> compressed, size_t base, size_t delta, std::vector<byte_t>* out_data);
   // helpers
   void insert(pointer_t address, size_t size, data_t data);
-  size_t evict(std::vector<Tag>* tags, std::vector<byte_t>* data);
+  void evict(std::vector<Tag>* tags);
+  int space(const std::vector<Tag>& tags, size_t size);
+  bool used(const std::vector<Tag>& tags, int segment);
   Tag* contains(std::vector<Tag>* tags, pointer_t needle);
   Tag* allocateTag(std::vector<Tag>* tags);
   // dimensions

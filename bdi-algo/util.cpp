@@ -1,5 +1,7 @@
 #include "util.h"
 
+using std::cout;
+using std::endl;
 using std::vector;
 
 //
@@ -23,8 +25,8 @@ void copy(const vector<byte_t>& src, int src_off, vector<byte_t>* dest,
 segment_t readBytes(const vector<byte_t>& line, int offset, size_t length) {
   segment_t data = 0x0;
   for (int i = offset; i < offset + length && i < line.size(); i++) {
-    byte_t byte = line[i];
-    data = (byte << (BITS_IN_BYTE * (i - offset))) | data;
+    segment_t byte = line[i];
+    data = (byte << (BITS_IN_BYTE * (i - offset))) + data;
   }
   return data;
 }
@@ -42,6 +44,10 @@ void writeBytes(data_t data, int offset, size_t length, vector<byte_t>* out_line
 //
 // Math and bit related helpers
 //
+
+size_t align(size_t n, size_t base) {
+  return ((n + base - 1) / base) * base;
+}
 
 pointer_t mask(int len) {
   pointer_t mask = 0x0;

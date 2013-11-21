@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
   Compressor compressor(CACHE_SIZE, CACHE_WAYS, CACHE_BSIZE);
 
   // open the trace file
-  string trace_file_name = std::string(PATH_TO_TRACE_DIR) + "simple.trace";
+  string trace_file_name = std::string(PATH_TO_TRACE_DIR) + "test.trace";
   cout << ">> Parsing file: " << trace_file_name << endl;
   ifstream trace_file(trace_file_name);
 
@@ -33,13 +33,11 @@ int main(int argc, char const *argv[]) {
     cout << std::dec << size << " " << data << endl;
 
     // perform correct memory operation
-    cout << endl;
     if (type == TOKEN_LOAD) {
       compressor.Load(address, size, data);
     } else if (type == TOKEN_STORE) {
       compressor.Store(address, size, data);
     }
-    cout << endl;
 
     // cycle the compressor
     compressor.Cycle();
