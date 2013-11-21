@@ -32,8 +32,8 @@ void Tag::SetMode(compression_t mode) {
     default: size = 32;
   }
   // calulate the aligned size and start
-  size_t seg_size = sizeof(segment_t);
-  size_aligned = (size % seg_size > 0) ? size + seg_size : size;
+  size_seg = (size + (SEGMENT_SIZE - 1)) / SEGMENT_SIZE;
+  size_aligned = size_seg * BITS_IN_BYTE;
 }
 
 void Tag::Print() const {

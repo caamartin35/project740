@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#define BITS_IN_BYTE 8
+
 typedef uint8_t  byte_t;     // 1 byte
 typedef uint64_t data_t;     // 8 bytes
 typedef int64_t  delta_t;    // 8 bytes

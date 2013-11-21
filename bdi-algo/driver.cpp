@@ -33,18 +33,20 @@ int main(int argc, char const *argv[]) {
     cout << std::dec << size << " " << data << endl;
 
     // perform correct memory operation
+    cout << endl;
     if (type == TOKEN_LOAD) {
       compressor.Load(address, size, data);
     } else if (type == TOKEN_STORE) {
       compressor.Store(address, size, data);
     }
+    cout << endl;
 
     // cycle the compressor
     compressor.Cycle();
   }
 
   // print out the results
-  compressor.Print();
+  // compressor.Print();
   cout << ">> Results: " << endl;
   cout << "   hits = " << compressor.hits << endl;
   cout << "   misses = " << compressor.misses << endl;

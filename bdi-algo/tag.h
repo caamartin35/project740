@@ -35,6 +35,7 @@ class Tag {
   // storage pointers
   int seg_start;
   int size;
+  int size_seg;
   int size_aligned;
   // for LRU imitation
   unsigned int age;
