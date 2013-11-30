@@ -3,36 +3,36 @@
 // set up tracer
 trace_t trace;
 
-void sort(node_t** a, int array_size) {
+void sort(node_t* nodes, int array_size) {
   int i;
   for (i = 0; i < array_size - 1; ++i) {
     int min = i;
-    node_t* temp;
+    node_t temp;
     for (int j = i + 1; j < array_size; ++j) {
-      if (a[j]->data < a[min]->data) {
+      if (nodes[j].data < nodes[min].data) {
         min = j;
       }
 
-      trace_load(&trace, &a[j]->data, sizeof(a[j]->data), a[j]->data);
-      trace_load(&trace, &a[j]->flag, sizeof(a[j]->flag), a[j]->flag);
-      trace_load(&trace, &a[j]->next, sizeof(a[j]->next), (data_t)a[j]->next);
-
-      trace_load(&trace, &a[min]->data, sizeof(a[min]->data), a[min]->data);
-      trace_load(&trace, &a[min]->flag, sizeof(a[min]->flag), a[min]->flag);
-      trace_load(&trace, &a[min]->next, sizeof(a[min]->next), (data_t)a[min]->next);
+      // for the data comparison
+      trace_load(&trace, &nodes[j].data, sizeof(nodes[j].data), nodes[j].data);
+      trace_load(&trace, &nodes[min].data, sizeof(nodes[min].data), nodes[min].data);
     }
 
-    temp = a[i];
-    a[i] = a[min];
-    a[min] = temp;
+    temp = nodes[i];
+    nodes[i] = nodes[min];
+    nodes[min] = temp;
 
-    trace_store(&trace, &a[min]->data, sizeof(a[i]->data), a[i]->data);
-    trace_store(&trace, &a[min]->flag, sizeof(a[i]->flag), a[i]->flag);
-    trace_store(&trace, &a[min]->next, sizeof(a[i]->next), (data_t)a[i]->next);
+    trace_load(&trace, &temp.data, sizeof(nodes[i].data), nodes[i].data);
+    trace_load(&trace, &temp.flag, sizeof(nodes[i].flag), nodes[i].flag);
+    trace_load(&trace, &temp.next, sizeof(nodes[i].next), (data_t)nodes[i].next);
 
-    trace_store(&trace, &a[i]->data, sizeof(a[min]->data), a[min]->data);
-    trace_store(&trace, &a[i]->flag, sizeof(a[min]->flag), a[min]->flag);
-    trace_store(&trace, &a[i]->next, sizeof(a[min]->next), (data_t)a[min]->next);
+    trace_store(&trace, &nodes[min].data, sizeof(nodes[i].data), nodes[i].data);
+    trace_store(&trace, &nodes[min].flag, sizeof(nodes[i].flag), nodes[i].flag);
+    trace_store(&trace, &nodes[min].next, sizeof(nodes[i].next), (data_t)nodes[i].next);
+
+    trace_store(&trace, &nodes[i].data, sizeof(nodes[min].data), nodes[min].data);
+    trace_store(&trace, &nodes[i].flag, sizeof(nodes[min].flag), nodes[min].flag);
+    trace_store(&trace, &nodes[i].next, sizeof(nodes[min].next), (data_t)nodes[min].next);
   }
 }
 
@@ -46,16 +46,12 @@ int main(int argc, char const *argv[]) {
 
   // create a bunch of nodes
   int num_nodes = 1000;
-  node_t** nodes = (node_t**) malloc(num_nodes * sizeof(node_t*));
-  node_t* node_structs = (node_t*) malloc(num_nodes * sizeof(node_t));
+  node_t* nodes = (node_t*) malloc(num_nodes * sizeof(node_t));
   for (int i = 0; i < num_nodes; i++) {
-    node_t* node = node_structs + i;
+    node_t* node = nodes + i;
     node->data = rand();
     node->flag = rand() % 2;
     node->next = NULL;
-    // save pointer
-    nodes[i] = node;
-    trace_store(&trace, &nodes[i], sizeof(node), (data_t)node);
     // use trace lib to record stores
     trace_store(&trace, &node->data, sizeof(node->data), node->data);
     trace_store(&trace, &node->flag, sizeof(node->flag), node->flag);

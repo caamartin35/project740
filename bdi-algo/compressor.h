@@ -23,6 +23,8 @@ class Compressor {
   int ways;
   int block_size;
   // stats
+  int used;
+  int requests;
   int hits;
   int misses;
   int evictions;
@@ -39,9 +41,10 @@ class Compressor {
   void insert(pointer_t address, size_t size, data_t data);
   void evict(std::vector<Tag>* tags);
   int space(const std::vector<Tag>& tags, size_t size);
-  bool used(const std::vector<Tag>& tags, int segment);
+  bool inUse(const std::vector<Tag>& tags, int segment);
   Tag* contains(std::vector<Tag>* tags, pointer_t needle);
   Tag* allocateTag(std::vector<Tag>* tags);
+  void deallocateTag(Tag* tag);
   // dimensions
   pointer_t getTag(pointer_t address);
   pointer_t getSet(pointer_t address);

@@ -15,7 +15,7 @@ void trace_destroy(trace_t* trace) {
 void trace_load(trace_t* trace, void *address, size_t size, data_t data) {
   trace->loads++;
   // write to the trace file
-  fprintf(trace->file, "LD %p %zu\n", address, size);
+  fprintf(trace->file, "LD %p %zu %llu\n", address, size, data);
 }
 
 void trace_store(trace_t* trace, void *address, size_t size, data_t data) {

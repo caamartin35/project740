@@ -12,6 +12,7 @@ int main(int argc, char const *argv[]) {
     cout << "Usage: ./driver [trace_file]" << endl;
     return 1;
   }
+  int verbose = 0;
 
   // initialize
   cout << ">> Starting driver ... " << endl;
@@ -43,22 +44,28 @@ int main(int argc, char const *argv[]) {
     }
 
     // show the parsed line
-    if (hit)
-      cout << "[hit] ";
-    else
-      cout << "      ";
-    cout << type << " 0x" << std::hex << address << " ";
-    cout << std::dec << size << " " << data << endl;
+    if (verbose > 0) {
+      if (hit)
+        cout << "[hit] ";
+      else
+        cout << "      ";
+      cout << type << " 0x" << std::hex << address << " ";
+      cout << std::dec << size << " " << data << endl;
+    }
 
     // cycle the compressor
     compressor.Cycle();
   }
 
   // print out the results
-  // compressor.Print();
+  double hit_frac = 100.0 * compressor.hits / compressor.requests;
+  double miss_frac = 100.0 * compressor.misses / compressor.requests;
+  double util = 100.0 * compressor.used / compressor.size;
   cout << ">> Results: " << endl;
-  cout << "   hits = " << compressor.hits << endl;
-  cout << "   misses = " << compressor.misses << endl;
+  cout << "   used = " << (compressor.used / 1024.0) << "KB - " << util << "%" << endl;
+  cout << "   requests = " << compressor.requests << endl;
+  cout << "   hits = " << compressor.hits << " - " << hit_frac << "%" <<  endl;
+  cout << "   misses = " << compressor.misses << " - " << miss_frac << "%" << endl;
   cout << "   evictions = " << compressor.evictions << endl;
   return 0;
 }

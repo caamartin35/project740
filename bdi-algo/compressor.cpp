@@ -26,7 +26,11 @@ Compressor::Compressor(int size, int ways, int block_size) {
     data_store[i].resize(block_size * ways);
   }
 
+  // memory utilization
+  used = 0;
+
   // initialize counters
+  requests = 0;
   hits = 0;
   misses = 0;
   evictions = 0;
@@ -47,10 +51,12 @@ bool Compressor::Load(pointer_t address, size_t size, data_t data) {
   vector<Tag>* tags = &tag_store[index];
   Tag* tag = contains(tags, tag_value);
   if (!tag) {
+    requests++;
     misses++;
     insert(address, size, data);
     return false;
   } else {
+    requests++;
     hits++;
     tag->age = 0;
     return true;
@@ -63,10 +69,12 @@ bool Compressor::Store(pointer_t address, size_t size, data_t data) {
   pointer_t needle = getTag(address);
   Tag *tag = contains(tags, needle);
   if (!tag) {
+    requests++;
     misses++;
     insert(address, size, data);
     return false;
   } else {
+    requests++;
     hits++;
     insert(address, size, data);
     return true;
@@ -95,7 +103,7 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
   compression_t mode;
   if (tag) {
     decompress(*tag, *data_array, &uncompressed);
-    tag->valid = false; // may need to find new home
+    deallocateTag(tag); // may need to find new home
   }
   writeBytes(data, bib, size, &uncompressed);
   compress(uncompressed, &compressed, &mode);
@@ -119,6 +127,9 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
   tag->Allocate(getTag(address), mode, start_seg);
   tag->age = 0;
   copy(compressed, 0, data_array, start, tag->size);
+
+  // update the usage stats
+  used += tag->size_aligned;
 }
 
 // if every block is invalid, this does nothing
@@ -129,8 +140,7 @@ void Compressor::evict(vector<Tag>* tags) {
     if (tag->valid && (!oldest || oldest->age < tag->age))
       oldest = tag;
   }
-  // evict this tag
-  oldest->valid = false;
+  deallocateTag(oldest);
   evictions++;
 }
 
@@ -139,7 +149,7 @@ int Compressor::space(const vector<Tag>& tags, size_t size) {
   int start = -1;
   size_t space = 0;
   for (int seg = 0; seg < num_segs; seg++) {
-    if (!used(tags, seg)) {
+    if (!inUse(tags, seg)) {
       if (space == 0)
         start = seg;
       space += SEGMENT_SIZE;
@@ -153,7 +163,7 @@ int Compressor::space(const vector<Tag>& tags, size_t size) {
   return -1;
 }
 
-bool Compressor::used(const vector<Tag>& tags, int segment) {
+bool Compressor::inUse(const vector<Tag>& tags, int segment) {
   for (int j = 0; j < tags.size(); j++) {
     const Tag& tag = tags[j];
     if (tag.valid &&
@@ -350,6 +360,11 @@ Tag* Compressor::allocateTag(vector<Tag>* tags) {
   return NULL;
 }
 
+void Compressor::deallocateTag(Tag* tag) {
+  if (!tag) return;
+  used -= tag->size_aligned;
+  tag->valid = false;
+}
 
 //
 // Dimension related helpers.
