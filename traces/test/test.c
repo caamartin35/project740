@@ -3,7 +3,7 @@
 int main(int argc, char const *argv[]) {
   // set up tracer
   trace_t trace;
-  trace_init(&trace, "outputs/test.trace");
+  trace_init(&trace, "../outputs/test.trace");
   printf(">> Generating memory trace ...\n");
 
   // set up random numbers

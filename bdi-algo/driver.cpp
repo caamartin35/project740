@@ -7,12 +7,18 @@ using std::string;
 using std::stringstream;
 
 int main(int argc, char const *argv[]) {
+  // check args
+  if (argc < 2) {
+    cout << "Usage: ./driver [trace_file]" << endl;
+    return 1;
+  }
+
   // initialize
   cout << ">> Starting driver ... " << endl;
   Compressor compressor(CACHE_SIZE, CACHE_WAYS, CACHE_BSIZE);
 
   // open the trace file
-  string trace_file_name = std::string(PATH_TO_TRACE_DIR) + "test.trace";
+  string trace_file_name = std::string(PATH_TO_TRACE_DIR) + argv[1];
   cout << ">> Parsing file: " << trace_file_name << endl;
   ifstream trace_file(trace_file_name);
 
@@ -28,16 +34,21 @@ int main(int argc, char const *argv[]) {
     ss << std::hex << address_str;
     ss >> address;
 
+    // perform correct memory operation
+    bool hit = false;
+    if (type == TOKEN_LOAD) {
+      hit = compressor.Load(address, size, data);
+    } else if (type == TOKEN_STORE) {
+      hit = compressor.Store(address, size, data);
+    }
+
     // show the parsed line
+    if (hit)
+      cout << "[hit] ";
+    else
+      cout << "      ";
     cout << type << " 0x" << std::hex << address << " ";
     cout << std::dec << size << " " << data << endl;
-
-    // perform correct memory operation
-    if (type == TOKEN_LOAD) {
-      compressor.Load(address, size, data);
-    } else if (type == TOKEN_STORE) {
-      compressor.Store(address, size, data);
-    }
 
     // cycle the compressor
     compressor.Cycle();

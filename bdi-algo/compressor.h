@@ -13,8 +13,8 @@
 class Compressor {
  public:
   Compressor(int size, int ways, int block_size);
-  void Load(pointer_t address, size_t size, data_t data);
-  void Store(pointer_t address, size_t size, data_t data);
+  bool Load(pointer_t address, size_t size, data_t data);
+  bool Store(pointer_t address, size_t size, data_t data);
   void Cycle();
   void Print() const;
   // data

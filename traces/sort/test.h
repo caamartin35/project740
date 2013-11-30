@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "trace.h"
+#include "../trace.h"
 
 struct node_s;
 

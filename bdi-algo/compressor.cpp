@@ -41,7 +41,7 @@ void Compressor::Cycle() {
   }
 }
 
-void Compressor::Load(pointer_t address, size_t size, data_t data) {
+bool Compressor::Load(pointer_t address, size_t size, data_t data) {
   pointer_t index = getSet(address);
   pointer_t tag_value = getTag(address);
   vector<Tag>* tags = &tag_store[index];
@@ -49,13 +49,15 @@ void Compressor::Load(pointer_t address, size_t size, data_t data) {
   if (!tag) {
     misses++;
     insert(address, size, data);
+    return false;
   } else {
     hits++;
     tag->age = 0;
+    return true;
   }
 }
 
-void Compressor::Store(pointer_t address, size_t size, data_t data) {
+bool Compressor::Store(pointer_t address, size_t size, data_t data) {
   int index = getSet(address);
   vector<Tag>* tags = &tag_store[index];
   pointer_t needle = getTag(address);
@@ -63,9 +65,11 @@ void Compressor::Store(pointer_t address, size_t size, data_t data) {
   if (!tag) {
     misses++;
     insert(address, size, data);
+    return false;
   } else {
     hits++;
     insert(address, size, data);
+    return true;
   }
 }
 

@@ -2,7 +2,7 @@
 CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=
-SOURCES=trace.c test.c
+SOURCES=../trace.c test.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=test
 
