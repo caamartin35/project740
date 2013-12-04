@@ -34,6 +34,7 @@ class Tag {
   void SetMode(compression_t mode);
   void Allocate(pointer_t tag, compression_t mode, int seg_start);
   void Print() const;
+  bool operator== (const Tag& rhs);
   // data
   bool valid;
   compression_t mode;

@@ -1,6 +1,7 @@
 #include "tag.h"
 
 using std::cout;
+using std::endl;
 
 Tag::Tag() {
   valid = false;
@@ -38,4 +39,9 @@ void Tag::SetMode(compression_t mode) {
 
 void Tag::Print() const {
   cout << "[v: " << valid << ", size: " << size << ", tag: " << tag << "]";
+}
+
+bool Tag::operator== (const Tag& rhs) {
+  bool equals = valid && rhs.valid && (tag == rhs.tag);
+  return equals;
 }

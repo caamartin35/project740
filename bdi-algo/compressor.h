@@ -4,6 +4,7 @@
 #include <climits>
 #include <iostream>
 #include <iomanip>
+#include <list>
 #include <vector>
 
 #include "tag.h"
@@ -39,12 +40,13 @@ class Compressor {
   void unpackBaseDelta(const std::vector<byte_t> compressed, size_t base, size_t delta, std::vector<byte_t>* out_data);
   // helpers
   void insert(pointer_t address, size_t size, data_t data);
-  void evict(std::vector<Tag>* tags);
-  int space(const std::vector<Tag>& tags, size_t size);
-  bool inUse(const std::vector<Tag>& tags, int segment);
-  Tag* contains(std::vector<Tag>* tags, pointer_t needle);
-  Tag* allocateTag(std::vector<Tag>* tags);
+  void evict(std::list<Tag>* tags);
+  int space(const std::list<Tag>& tags, size_t size);
+  bool inUse(const std::list<Tag>& tags, int segment);
+  Tag* contains(std::list<Tag>* tags, pointer_t needle);
+  Tag* allocateTag(std::list<Tag>* tags);
   void deallocateTag(Tag* tag);
+  Tag* touchTag(std::list<Tag>* tags, const Tag& tag);
   // dimensions
   pointer_t getTag(pointer_t address);
   pointer_t getSet(pointer_t address);
@@ -54,7 +56,7 @@ class Compressor {
   int set_bits;
   int bib_bits;
   // memory
-  std::vector<std::vector<Tag> > tag_store;
+  std::vector<std::list<Tag> > tag_store;
   std::vector<std::vector<byte_t> > data_store;
 };
 

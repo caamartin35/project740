@@ -2,6 +2,7 @@
 
 using std::cout;
 using std::endl;
+using std::list;
 using std::vector;
 
 Compressor::Compressor(int size, int ways, int block_size) {
@@ -19,7 +20,11 @@ Compressor::Compressor(int size, int ways, int block_size) {
   // allocate cache memory
   tag_store.resize(sets);
   for (int i = 0; i < tag_store.size(); i++) {
-    tag_store[i].resize(2 * ways);  // twice as many tags
+    // twice as many tags
+    for (int j = 0; j < 2 * ways; j++) {
+      Tag tag;
+      tag_store[i].push_back(tag);
+    }
   }
   data_store.resize(sets);
   for (int i = 0; i < data_store.size(); i++) {
@@ -37,23 +42,28 @@ Compressor::Compressor(int size, int ways, int block_size) {
 }
 
 void Compressor::Cycle() {
-  // cout << "[before] cycle" << endl << std::flush;
-  // cout << "  requests = " << requests << std::flush << endl;
-  // cout << "  tag_store.len = " << tag_store.size() << std::flush << endl;
+  cout << "[before] cycle" << endl << std::flush;
+  cout << "  requests = " << requests << std::flush << endl;
+  cout << "  tag_store.len = " << tag_store.size() << std::flush << endl;
   for (int i = 0; i < tag_store.size(); i++) {
-    vector<Tag>* tags = &tag_store[i];
-    for (int j = 0; j < tags->size(); j++) {
-      if (tags->at(j).valid)
-        tags->at(j).age++;
+    list<Tag>* tags = &tag_store[i];
+    list<Tag>::iterator iter;
+    cout << "[" << i << "] tags.len = " << tags->size() << "\t ";
+    for (iter = tags->begin(); iter != tags->end(); ++iter) {
+      Tag* tag = &(*iter);
+      if (tag->valid)
+        tag->age++;
+      cout << tag->age << " ";
     }
+    cout << endl;
   }
-  // cout << "[after] cycle" << endl << std::flush;
+  cout << "[after] cycle" << endl << std::flush;
 }
 
 bool Compressor::Load(pointer_t address, size_t size, data_t data) {
   pointer_t index = getSet(address);
   pointer_t tag_value = getTag(address);
-  vector<Tag>* tags = &tag_store[index];
+  list<Tag>* tags = &tag_store[index];
   Tag* tag = contains(tags, tag_value);
   if (!tag) {
     requests++;
@@ -63,6 +73,7 @@ bool Compressor::Load(pointer_t address, size_t size, data_t data) {
   } else {
     requests++;
     hits++;
+    touchTag(tags, *tag);
     tag->age = 0;
     return true;
   }
@@ -70,7 +81,7 @@ bool Compressor::Load(pointer_t address, size_t size, data_t data) {
 
 bool Compressor::Store(pointer_t address, size_t size, data_t data) {
   int index = getSet(address);
-  vector<Tag>* tags = &tag_store[index];
+  list<Tag>* tags = &tag_store[index];
   pointer_t needle = getTag(address);
   Tag *tag = contains(tags, needle);
   if (!tag) {
@@ -99,7 +110,7 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
 
   // get tags and data
   vector<byte_t>* data_array = &data_store[index];
-  vector<Tag>* tags = &tag_store[index];
+  list<Tag>* tags = &tag_store[index];
   Tag* tag = contains(tags, tag_value);
 
   // if this block is in the cache, decompress, then write.
@@ -130,18 +141,20 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
 
   // finally copy the data in and init the tag
   tag->Allocate(getTag(address), mode, start_seg);
-  tag->age = 0;
   copy(compressed, 0, data_array, start, tag->size);
 
   // update the usage stats
+  tag->age = 0;
+  touchTag(tags, *tag);
   used += tag->size_aligned;
 }
 
 // if every block is invalid, this does nothing
-void Compressor::evict(vector<Tag>* tags) {
+void Compressor::evict(list<Tag>* tags) {
   Tag* oldest = NULL;
-  for (int i = 0; i < tags->size(); i++) {
-    Tag* tag = &tags->at(i);
+  std::list<Tag>::iterator iter;
+  for (iter = tags->begin(); iter != tags->end(); ++iter) {
+    Tag* tag = &(*iter);
     if (tag->valid && (!oldest || oldest->age < tag->age))
       oldest = tag;
   }
@@ -149,7 +162,7 @@ void Compressor::evict(vector<Tag>* tags) {
   evictions++;
 }
 
-int Compressor::space(const vector<Tag>& tags, size_t size) {
+int Compressor::space(const list<Tag>& tags, size_t size) {
   int num_segs = block_size / SEGMENT_SIZE;
   int start = -1;
   size_t space = 0;
@@ -168,9 +181,10 @@ int Compressor::space(const vector<Tag>& tags, size_t size) {
   return -1;
 }
 
-bool Compressor::inUse(const vector<Tag>& tags, int segment) {
-  for (int j = 0; j < tags.size(); j++) {
-    const Tag& tag = tags[j];
+bool Compressor::inUse(const list<Tag>& tags, int segment) {
+  list<Tag>::const_iterator iter;
+  for (iter = tags.begin(); iter != tags.end(); ++iter) {
+    const Tag& tag = *iter;
     if (tag.valid &&
         tag.seg_start <= segment && segment < tag.seg_start + tag.size_seg)
       return true;
@@ -349,18 +363,22 @@ bool Compressor::allSame(const vector<byte_t>& line, segment_t* out_value) {
 // Tag related helpers.
 //
 
-Tag* Compressor::contains(vector<Tag>* tags, pointer_t needle) {
-  for (int i = 0; i < tags->size(); i++) {
-    Tag* tag = &tags->at(i);
+Tag* Compressor::contains(list<Tag>* tags, pointer_t needle) {
+  list<Tag>::iterator iter;
+  for (iter = tags->begin(); iter != tags->end(); ++iter) {
+    Tag* tag = &(*iter);
     if (tag->valid && tag->tag == needle)
       return tag;
   }
   return NULL;
 }
 
-Tag* Compressor::allocateTag(vector<Tag>* tags) {
-  for (int i = 0; i < tags->size(); i++) {
-    if (!(tags->at(i).valid)) return &tags->at(i);
+Tag* Compressor::allocateTag(list<Tag>* tags) {
+  list<Tag>::iterator iter;
+  for (iter = tags->begin(); iter != tags->end(); ++iter) {
+    Tag *tag = &(*iter);
+    if (!tag->valid)
+      return tag;
   }
   return NULL;
 }
@@ -369,7 +387,15 @@ void Compressor::deallocateTag(Tag* tag) {
   if (!tag) return;
   used -= tag->size_aligned;
   tag->valid = false;
+  tag->age = 0x0;
 }
+
+Tag* Compressor::touchTag(list<Tag>* tags, const Tag& tag) {
+  tags->remove(tag);
+  tags->push_front(tag);
+  return &tags->front();
+}
+
 
 //
 // Dimension related helpers.
@@ -393,10 +419,11 @@ pointer_t Compressor::getBib(pointer_t address) {
 //
 void Compressor::Print() const {
   for (int i = 0; i < sets; i++) {
-    const vector<Tag>& tags = tag_store[i];
+    const list<Tag>& tags = tag_store[i];
     cout << "set[" << i << "] tags: ";
-    for (int j = 0; j < tags.size(); j++) {
-      const Tag& tag = tags[j];
+    std::list<Tag>::const_iterator iter;
+    for (iter = tags.begin(); iter != tags.end(); ++iter) {
+      const Tag& tag = *iter;
       tag.Print();
       cout << " ";
     }
