@@ -37,12 +37,17 @@ Compressor::Compressor(int size, int ways, int block_size) {
 }
 
 void Compressor::Cycle() {
+  // cout << "[before] cycle" << endl << std::flush;
+  // cout << "  requests = " << requests << std::flush << endl;
+  // cout << "  tag_store.len = " << tag_store.size() << std::flush << endl;
   for (int i = 0; i < tag_store.size(); i++) {
     vector<Tag>* tags = &tag_store[i];
     for (int j = 0; j < tags->size(); j++) {
-      tags->at(j).age++;
+      if (tags->at(j).valid)
+        tags->at(j).age++;
     }
   }
+  // cout << "[after] cycle" << endl << std::flush;
 }
 
 bool Compressor::Load(pointer_t address, size_t size, data_t data) {

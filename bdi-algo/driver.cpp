@@ -16,12 +16,17 @@ int main(int argc, char const *argv[]) {
 
   // initialize
   cout << ">> Starting driver ... " << endl;
-  Compressor compressor(CACHE_SIZE, CACHE_WAYS, CACHE_BSIZE);
 
   // open the trace file
   string trace_file_name = std::string(PATH_TO_TRACE_DIR) + argv[1];
   cout << ">> Parsing file: " << trace_file_name << endl;
   ifstream trace_file(trace_file_name);
+
+  // instantiate compressor
+  int cache_size = (1 << 20); // 512;
+  int cache_ways = 2; // 16;
+  int cache_block_size = 32;
+  Compressor compressor(cache_size, cache_ways, cache_block_size);
 
   // read in tokens
   string type;
