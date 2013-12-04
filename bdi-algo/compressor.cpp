@@ -42,22 +42,8 @@ Compressor::Compressor(int size, int ways, int block_size) {
 }
 
 void Compressor::Cycle() {
-  cout << "[before] cycle" << endl << std::flush;
-  cout << "  requests = " << requests << std::flush << endl;
-  cout << "  tag_store.len = " << tag_store.size() << std::flush << endl;
-  for (int i = 0; i < tag_store.size(); i++) {
-    list<Tag>* tags = &tag_store[i];
-    list<Tag>::iterator iter;
-    cout << "[" << i << "] tags.len = " << tags->size() << "\t ";
-    for (iter = tags->begin(); iter != tags->end(); ++iter) {
-      Tag* tag = &(*iter);
-      if (tag->valid)
-        tag->age++;
-      cout << tag->age << " ";
-    }
-    cout << endl;
-  }
-  cout << "[after] cycle" << endl << std::flush;
+  // any cycling logic (per mem operation)
+  // maintain stats, etc.
 }
 
 bool Compressor::Load(pointer_t address, size_t size, data_t data) {
@@ -152,13 +138,13 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
 // if every block is invalid, this does nothing
 void Compressor::evict(list<Tag>* tags) {
   Tag* oldest = NULL;
-  std::list<Tag>::iterator iter;
-  for (iter = tags->begin(); iter != tags->end(); ++iter) {
-    Tag* tag = &(*iter);
-    if (tag->valid && (!oldest || oldest->age < tag->age))
-      oldest = tag;
+  list<Tag>::reverse_iterator iter;
+  for (iter = tags->rbegin(); iter != tags->rend(); ++iter) {
+    if (iter->valid)
+      oldest = &(*iter);
   }
-  deallocateTag(oldest);
+  if (oldest)
+    deallocateTag(oldest);
   evictions++;
 }
 

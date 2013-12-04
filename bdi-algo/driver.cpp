@@ -23,8 +23,8 @@ int main(int argc, char const *argv[]) {
   ifstream trace_file(trace_file_name);
 
   // instantiate compressor
-  int cache_size = 512; //(1 << 20); // 512;
-  int cache_ways = 2; // 16;
+  int cache_size = (1 << 20);
+  int cache_ways = 16;
   int cache_block_size = 32;
   Compressor compressor(cache_size, cache_ways, cache_block_size);
 
