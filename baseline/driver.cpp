@@ -22,11 +22,11 @@ int main(int argc, char const *argv[]) {
   cout << ">> Parsing file: " << trace_file_name << endl;
   ifstream trace_file(trace_file_name);
 
-  // instantiate compressor
+  // instantiate cache
   int cache_size = 1024; //(1 << 21);
   int cache_ways = 4;
   int cache_block_size = 32;
-  Compressor compressor(cache_size, cache_ways, cache_block_size);
+  Cache cache(cache_size, cache_ways, cache_block_size);
 
   // read in tokens
   string type;
@@ -43,9 +43,9 @@ int main(int argc, char const *argv[]) {
     // perform correct memory operation
     bool hit = false;
     if (type == TOKEN_LOAD) {
-      hit = compressor.Load(address, size, data);
+      hit = cache.Load(address, size, data);
     } else if (type == TOKEN_STORE) {
-      hit = compressor.Store(address, size, data);
+      hit = cache.Store(address, size, data);
     }
 
     // show the parsed line
@@ -58,19 +58,19 @@ int main(int argc, char const *argv[]) {
       cout << std::dec << size << " " << data << endl;
     }
 
-    // cycle the compressor
-    compressor.Cycle();
+    // cycle the cache
+    cache.Cycle();
   }
 
   // print out the results
-  double hit_frac = 100.0 * compressor.hits / compressor.requests;
-  double miss_frac = 100.0 * compressor.misses / compressor.requests;
-  double util = 100.0 * compressor.used / compressor.size;
+  double hit_frac = 100.0 * cache.hits / cache.requests;
+  double miss_frac = 100.0 * cache.misses / cache.requests;
+  double util = 100.0 * cache.used / cache.size;
   cout << ">> Results: " << endl;
-  cout << "   used = " << (compressor.used / 1024.0) << "KB - " << util << "%" << endl;
-  cout << "   requests = " << compressor.requests << endl;
-  cout << "   hits = " << compressor.hits << " - " << hit_frac << "%" <<  endl;
-  cout << "   misses = " << compressor.misses << " - " << miss_frac << "%" << endl;
-  cout << "   evictions = " << compressor.evictions << endl;
+  cout << "   used = " << (cache.used / 1024.0) << "KB - " << util << "%" << endl;
+  cout << "   requests = " << cache.requests << endl;
+  cout << "   hits = " << cache.hits << " - " << hit_frac << "%" <<  endl;
+  cout << "   misses = " << cache.misses << " - " << miss_frac << "%" << endl;
+  cout << "   evictions = " << cache.evictions << endl;
   return 0;
 }
