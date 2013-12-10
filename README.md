@@ -1,4 +1,3 @@
-project740
-==========
+## Base-Delta Compression with Memory Pooling
 
-The awesome project for 740
+This is a research project for CMU 18-740.
