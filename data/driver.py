@@ -2,7 +2,6 @@
 
 import argparse
 import glob
-import subprocess
 import os
 
 import data
@@ -22,20 +21,30 @@ parser.add_argument('-pool', help='Only run traces using memory pooling.', actio
 args = parser.parse_args()
 
 # starting the driver
-print '>> Running simulator for all traces.'
+print '>> Running simulator for all traces ...'
 
 # get trace files
 match = '/'.join([DIR_TRACES, '*.' + EXT_BASE])
 files = glob.glob(match)
 
 # baseline jobs
+print '.. Baseline traces ...'
+print data.Result.header()
 base_data = [ ]
 for filename in files:
   args = filename.split('/')[-1]
   command = '/'.join([DIR_BASE, EXE_DRIVER + ' ' + args])
-  process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-  (output, err) = process.communicate()
-  result = data.Result(output)
+  result = data.Result.get(command)
   base_data.append(result)
   print result
 
+# base delta jobs
+print '.. Base-Delta traces ...'
+print data.Result.header()
+bdi_data = [ ]
+for filename in files:
+  args = filename.split('/')[-1]
+  command = '/'.join([DIR_BDI, EXE_DRIVER + ' ' + args])
+  result = data.Result.get(command)
+  bdi_data.append(result)
+  print result

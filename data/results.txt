@@ -1,0 +1,17 @@
+>> Running simulator for all traces ...
+.. Baseline traces ...
+TRACE                      USED            UTIL            HIT%
+simple                 0.0625KB           6.25%             60%
+sort-100.pool               1KB            100%        96.5467%
+sort-100                    1KB            100%        86.0608%
+sort.pool                   1KB            100%        85.0443%
+sort                        1KB            100%        68.0027%
+test                  0.15625KB         15.625%        83.3333%
+.. Base-Delta traces ...
+TRACE                      USED            UTIL            HIT%
+simple                0.03125KB          3.125%             60%
+sort-100.pool          0.1875KB          18.75%        92.1558%
+sort-100             0.226562KB        22.6562%        71.0215%
+sort.pool            0.210938KB        21.0938%        84.1508%
+sort                 0.234375KB        23.4375%        66.4009%
+test                 0.148438KB        14.8438%        83.3333%

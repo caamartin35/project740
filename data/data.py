@@ -1,4 +1,25 @@
+import subprocess
+
+#
+# Class to hold result data.
+#
+
 class Result:
+
+  # static members
+  format = '{:<20} {:>10} {:>15} {:>15}'
+  @staticmethod
+  def header():
+    return Result.format.format('TRACE', 'USED', 'UTIL', 'HIT%')
+
+  @staticmethod
+  def get(command):
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    (output, err) = process.communicate()
+    return Result(output)
+
+
+  # instance members
   def __init__(self, raw):
     raw = raw.strip()
 
@@ -15,5 +36,4 @@ class Result:
     self.hit_ratio = hits[1].strip()
 
   def __str__(self):
-    util = '(' + self.util + ')'
-    return '{:<20} {:>10} {:>10} {:>15}'.format(self.trace, self.used, util, self.hit_ratio)
+    return Result.format.format(self.trace, self.used, self.util, self.hit_ratio)
