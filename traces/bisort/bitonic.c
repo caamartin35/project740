@@ -266,6 +266,7 @@ int spr_val,dir;
   /*printf("bisort %x\n", root);*/
   trace_load(&trace, &root->left, sizeof(root->left), (data_t)root->left);
   if (root->left == NIL) { /* <---- 8.7% load penalty */
+    trace_load(&trace, &root->value, sizeof(root->value), (data_t)root->value);
     if ((root->value > spr_val) ^ dir) {
       val = spr_val;
       spr_val = root->value;
