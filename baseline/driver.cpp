@@ -23,10 +23,7 @@ int main(int argc, char const *argv[]) {
   ifstream trace_file(trace_file_name);
 
   // instantiate cache
-  int cache_size = 1024; //(1 << 21);
-  int cache_ways = 4;
-  int cache_block_size = 32;
-  Cache cache(cache_size, cache_ways, cache_block_size);
+  Cache cache(CACHE_SIZE, CACHE_WAYS, CACHE_BLOCK_SIZE);
 
   // read in tokens
   string type;

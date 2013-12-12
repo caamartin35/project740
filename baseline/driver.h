@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 
+#include "../lib/config.h"
 #include "../lib/types.h"
 
 #include "cache.h"

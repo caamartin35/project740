@@ -7,8 +7,9 @@
 #include <list>
 #include <vector>
 
+#include "../lib/types.h"
+
 #include "tag.h"
-#include "types.h"
 #include "util.h"
 
 class Compressor {

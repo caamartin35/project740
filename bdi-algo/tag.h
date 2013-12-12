@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "types.h"
+#include "../lib/types.h"
 
 #define BASE2              2
 #define BASE4              4

@@ -6,8 +6,10 @@
 #include <string>
 #include <sstream>
 
+#include "../lib/config.h"
+#include "../lib/types.h"
+
 #include "compressor.h"
-#include "types.h"
 
 #define PATH_TO_TRACE_DIR    "../traces/outputs/"
 #define TOKEN_LOAD           "LD"

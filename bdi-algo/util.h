@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "types.h"
+#include "../lib/types.h"
 
 // read/writing data
 void copy(const std::vector<byte_t>& src, int src_off,
