@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
   ifstream trace_file(trace_file_name);
 
   // instantiate compressor
-  Compressor compressor(CACHE_SIZE, CACHE_WAYS, CACHE_BLOCK_SIZE);
+  Compressor compressor(CONFIG_L2_SIZE, CONFIG_L2_WAYS, CONFIG_L2_BLOCK_SIZE);
 
   // read in tokens
   string type;
