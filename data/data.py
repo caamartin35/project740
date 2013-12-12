@@ -8,10 +8,16 @@ import subprocess
 class Result:
 
   # static members
-  format = '{:<20} {:<10} {:>15} {:>15} {:>15}'
+  summary_format = '{:<20} {:<10} {:>15} {:>15} {:>15}'
+  csv_format = '{:}, {:}, {:}, {:}, {:}, {:}'
   @staticmethod
-  def header():
-    return Result.format.format('TRACE', 'LENGTH', 'USED', 'UTIL', 'HIT%')
+  def summary_header():
+    return Result.summary_format.format('TRACE', 'LENGTH', 'USED', 'UTIL', 'HIT%')
+
+  @staticmethod
+  def csv_header():
+    return Result.summary_format.format('TRACE', 'LENGTH (KB)', 'USED (KB)', 'REQUESTS', 'HITS', 'MISSES')
+
 
   @staticmethod
   def get(command):
@@ -24,19 +30,32 @@ class Result:
   def __init__(self, raw):
     raw = raw.strip()
 
-    # populate
+    # parse
     lines = raw.split('\n')
     path = lines[1].split(':')[-1].strip()
     trace = path.split('/')[-1].split('.trace')[0].strip()
     used = lines[3].split('=')[-1].split('-')
+    requests = lines[4].split('=')[-1].strip()
     hits = lines[5].split('=')[-1].split('-')
+    misses = lines[6].split('=')[-1].split('-')
 
+    # store
     self.trace = trace
     self.size = str(os.path.getsize(path) / 1024) + 'KB'
     self.used = used[0].strip()
     self.util = used[1].strip()
+    self.requests = requests
     self.hits = hits[0].strip()
     self.hit_ratio = hits[1].strip()
+    self.misses = misses[0].strip()
+    self.miss_ratio = misses[1].strip()
 
   def __str__(self):
-    return Result.format.format(self.trace, self.size, self.used, self.util, self.hit_ratio)
+    return self.summary()
+
+  def summary(self):
+    return Result.summary_format.format(self.trace, self.size, self.used, self.util, self.hit_ratio)
+
+  def csv(self):
+    return Result.csv_format.format(self.trace, self.size.strip('KB'), self.used.strip('KB'), self.requests, self.hits, self.misses)
+
