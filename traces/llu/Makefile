@@ -1,6 +1,6 @@
 # macros
 CC=gcc
-CFLAGS=-c -Wall
+CFLAGS=-c -g -Wall
 LDFLAGS=
 SOURCES=../trace.c llubenchmark.c
 OBJECTS=$(SOURCES:.c=.o)

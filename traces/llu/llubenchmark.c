@@ -41,6 +41,11 @@
 #define assert(x)
 #endif
 
+
+// global trace file
+trace_t trace;
+
+
 /* This file should compile stand alone */
 
 struct element {
@@ -48,8 +53,7 @@ struct element {
   int count;
 };
 
-void
-usage(char *name) {
+void usage(char *name) {
   printf("%s:\n", name);
   printf("-i <number of (I)terations>\n");
   printf("[-l <initial (L)ength of list, in elements>] (default 1)\n");
@@ -70,13 +74,13 @@ int num_allocated = 0;
 struct element *
 allocate() {
   if (next_free == ALLOC_SIZE) {
-	 next_free = 0;
-	 free_list = (struct element *) malloc (ALLOC_SIZE * element_size);
-	 assert(free_list != 0);
+   next_free = 0;
+   free_list = (struct element *) malloc (ALLOC_SIZE * element_size);
+   assert(free_list != 0);
   }
   num_allocated ++;
   return (struct element *)
-	 (((char *)free_list) + ((next_free ++) * element_size));
+   (((char *)free_list) + ((next_free ++) * element_size));
 }
 #else
 struct element * allocate() {
@@ -85,17 +89,21 @@ struct element * allocate() {
 }
 #endif
 
-int
-main(int argc, char *argv[]) {
-  int max_iterations = 1000,
-	 dirty = 1,
-	 num_lists = 196,
-	 tail = 1,
-	 initial_length = 1;
+int main(int argc, char *argv[]) {
+  // init the tracer
+  trace_init(&trace, "../outputs/llu.trace");
+
+  // configuration
+  int max_iterations = 100, // 1000
+   dirty = 1,
+   num_lists = 98, // 196
+   tail = 1,
+   initial_length = 1;
   float growth_rate = 0.333;
   char c = 0;
   int i = 0, j = 0, k = 0;
   int accumulate = 0;
+  trace_store(&trace, &accumulate, sizeof(accumulate), (data_t)accumulate);
 
   struct element **lists = NULL;
   float growth = 0.0;
@@ -104,26 +112,26 @@ main(int argc, char *argv[]) {
 
   printf("This benchmark modified to not use hard coded pool allocation!\n");
   while (arg < argc) {
-	 if ((argv[arg][0] != '-') || (argv[arg][2] != 0)) {
-		printf("parse error in %s\n", argv[arg]);
-		usage(argv[0]);
-		return(-1);
-	 }
-	 c = argv[arg][1];
-	 arg ++;
-	 switch(c) {
-	 case 'd': 		dirty = 1; break;
-	 case 'g': 		growth_rate = atof(argv[arg++]);  break;
-	 case 'i': 		max_iterations = atoi(argv[arg++]); break;
-	 case 'l': 		initial_length = atoi(argv[arg++]); break;
-	 case 'n': 		num_lists = atoi(argv[arg++]); break;
-	 case 's': 		element_size = atoi(argv[arg++]); break;
-	 case 't': 		tail = 1; break;
-	 default:
-		printf("unrecognized option: %c\n", c);
-		usage(argv[0]);
-		return(-1);
-	 }
+   if ((argv[arg][0] != '-') || (argv[arg][2] != 0)) {
+    printf("parse error in %s\n", argv[arg]);
+    usage(argv[0]);
+    return(-1);
+   }
+   c = argv[arg][1];
+   arg ++;
+   switch(c) {
+   case 'd':    dirty = 1; break;
+   case 'g':    growth_rate = atof(argv[arg++]);  break;
+   case 'i':    max_iterations = atoi(argv[arg++]); break;
+   case 'l':    initial_length = atoi(argv[arg++]); break;
+   case 'n':    num_lists = atoi(argv[arg++]); break;
+   case 's':    element_size = atoi(argv[arg++]); break;
+   case 't':    tail = 1; break;
+   default:
+    printf("unrecognized option: %c\n", c);
+    usage(argv[0]);
+    return(-1);
+   }
   }
 
   assert (element_size > sizeof(struct element));
@@ -131,63 +139,82 @@ main(int argc, char *argv[]) {
 
   /* build lists */
   lists = (struct element **) malloc (num_lists * sizeof(struct element *));
+  trace_store(&trace, &lists, sizeof(lists), (data_t)lists);
   assert(lists != 0);
 
-  for (i = 0 ; i < num_lists ; i ++) {
-	 lists[i] = NULL;
+  for (i = 0; i < num_lists; i++) {
+    lists[i] = NULL;
+    trace_store(&trace, &lists[i], sizeof(lists[i]), (data_t)lists[i]);
   }
 
 
-  for (i = 0 ; i < initial_length ; i ++) {
-	 for (j = 0 ; j < num_lists ; j ++) {
-		struct element *e = allocate();
-		e->next = lists[j];
-		e->count = 0;
-		lists[j] = e;
-	 }
+  for (i = 0; i < initial_length; i++) {
+    for (j = 0; j < num_lists; j++) {
+      struct element *e = allocate();
+      e->next = lists[j];
+      e->count = 0;
+      lists[j] = e;
+      trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
+      trace_store(&trace, &e->count, sizeof(e->count), (data_t)e->count);
+      trace_store(&trace, &lists[j], sizeof(lists[j]), (data_t)lists[j]);
+    }
   }
 
   /* iterate */
   for (i = 0 ; i < max_iterations ; i ++) {
-	 if ((i % 1000) == 0) {
-		printf("%d\n", i);
-	 }
-	 /* traverse lists */
-	 for (j = 0 ; j < num_lists ; j ++) {
-		struct element *trav = lists[j];
-		while (trav != NULL) {
-		  accumulate += trav->count;
-		  if (dirty) {
-			 trav->count ++;
-		  }
-		  trav = trav->next;
-		}
-	 }
+   if ((i % 1000) == 0) {
+    printf("%d\n", i);
+   }
+   /* traverse lists */
+   for (j = 0 ; j < num_lists ; j ++) {
+    struct element *trav = lists[j];
+    trace_load(&trace, &lists[j], sizeof(lists[j]), (data_t)lists[j]);
+    while (trav != NULL) {
+      trace_load(&trace, &accumulate, sizeof(accumulate), (data_t)accumulate);
+      accumulate += trav->count;
+      trace_store(&trace, &accumulate, sizeof(accumulate), (data_t)accumulate);
+      if (dirty) {
+       trace_load(&trace, &trav->count, sizeof(trav->count), (data_t)trav->count);
+       trav->count++;
+       trace_store(&trace, &trav->count, sizeof(trav->count), (data_t)trav->count);
+      }
+      trace_load(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+      trav = trav->next;
+    }
+   }
 
-	 /* grow lists */
-	 growth += growth_rate;
-	 j = growth;
-	 growth -= j;
-	 for ( ; j > 0 ; j --) {
-		for (k = 0 ; k < num_lists ; k ++) {
-		  struct element *e = allocate();
-		  e->count = k+j;
-		  if (tail) {
-			 struct element *trav = lists[k];
-			 while (trav->next != NULL) {
-				trav = trav->next;
-			 }
-			 trav->next = e;
-			 e->next = NULL;
-		  } else {
-			 e->next = lists[k];
-			 lists[k] = e;
-		  }
-		}
-	 }
+   /* grow lists */
+   growth += growth_rate;
+   j = growth;
+   growth -= j;
+   for ( ; j > 0 ; j --) {
+    for (k = 0 ; k < num_lists ; k ++) {
+      struct element *e = allocate();
+      e->count = k+j;
+      trace_store(&trace, &e->count, sizeof(e->count), (data_t)e->count);
+      if (tail) {
+       struct element *trav = lists[k];
+       trace_load(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[j]);
+       while (trav->next != NULL) {
+        trace_load(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+        trav = trav->next;
+       }
+       trav->next = e;
+       trace_store(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+       e->next = NULL;
+       trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
+      } else {
+       e->next = lists[k];
+       trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
+       lists[k] = e;
+       trace_store(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[k]);
+      }
+    }
+   }
   }
-  printf ("output = %d\n", accumulate);
 
+  // print the results
+  printf ("output = %d\n", accumulate);
   printf ("num allocated %d\n", num_allocated);
   return 0;
 }

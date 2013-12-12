@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 #
@@ -7,10 +8,10 @@ import subprocess
 class Result:
 
   # static members
-  format = '{:<20} {:>10} {:>15} {:>15}'
+  format = '{:<20} {:<10} {:>15} {:>15} {:>15}'
   @staticmethod
   def header():
-    return Result.format.format('TRACE', 'USED', 'UTIL', 'HIT%')
+    return Result.format.format('TRACE', 'LENGTH', 'USED', 'UTIL', 'HIT%')
 
   @staticmethod
   def get(command):
@@ -25,15 +26,17 @@ class Result:
 
     # populate
     lines = raw.split('\n')
-    trace = lines[1].split('/')[-1].split('.trace')[0].strip()
+    path = lines[1].split(':')[-1].strip()
+    trace = path.split('/')[-1].split('.trace')[0].strip()
     used = lines[3].split('=')[-1].split('-')
     hits = lines[5].split('=')[-1].split('-')
 
     self.trace = trace
+    self.size = str(os.path.getsize(path) / 1024) + 'KB'
     self.used = used[0].strip()
     self.util = used[1].strip()
     self.hits = hits[0].strip()
     self.hit_ratio = hits[1].strip()
 
   def __str__(self):
-    return Result.format.format(self.trace, self.used, self.util, self.hit_ratio)
+    return Result.format.format(self.trace, self.size, self.used, self.util, self.hit_ratio)

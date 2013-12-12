@@ -19,7 +19,7 @@ void trace_load(trace_t* trace, void *address, size_t size, data_t data) {
 }
 
 void trace_store(trace_t* trace, void *address, size_t size, data_t data) {
-  trace->loads++;
+  trace->stores++;
   // write to the trace file
   fprintf(trace->file, "ST %p %zu %llu\n", address, size, data);
 }

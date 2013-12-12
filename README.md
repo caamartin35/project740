@@ -10,5 +10,5 @@ You can alter various cache paramters in the `lib/config.h` file. If you modify 
 
 ### Data
 
-In the `data/` directory you can `driver.py` to run all traces on each simulator. To save the results, just redirect `stdout` to a new text file.
+In the `data/` directory you can use `driver.py` to run all traces on each simulator. The output is very readable. To save the results, just redirect `stdout` to a new text file.
 
