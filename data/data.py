@@ -16,7 +16,7 @@ class Result:
 
   @staticmethod
   def csv_header():
-    return Result.summary_format.format('TRACE', 'LENGTH (KB)', 'USED (KB)', 'REQUESTS', 'HITS', 'MISSES')
+    return Result.csv_format.format('TRACE', 'LENGTH (KB)', 'USED (KB)', 'REQUESTS', 'HITS', 'MISSES')
 
 
   @staticmethod

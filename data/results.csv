@@ -1,4 +1,4 @@
-TRACE                LENGTH (KB)       USED (KB)        REQUESTS            HITS
+TRACE, LENGTH (KB), USED (KB), REQUESTS, HITS, MISSES
 bisort.pool, 6456, 20, 245062, 244422, 640
 bisort, 6424, 32, 245062, 244038, 1024
 llu.pool, 24759, 104.938, 900034, 896676, 3358

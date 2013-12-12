@@ -49,9 +49,10 @@ for filename in files:
   print result
 
 if args.csv:
-  print '.. Saving to CSV file ... Done!'
+  print '.. Saving to CSV file ...',
   f = open(args.csv, 'w')
   f.write(data.Result.csv_header() + '\n')
   for el in base_data:
     f.write(el.csv() + '\n')
   f.close()
+  print 'Done!'
