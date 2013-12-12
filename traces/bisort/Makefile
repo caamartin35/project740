@@ -1,8 +1,8 @@
 # macros
 CC=gcc
-CFLAGS=-c -Wall
+CFLAGS=-c -g -Wall
 LDFLAGS=
-SOURCES=../trace.c test.c
+SOURCES=../trace.c bitonic.c args.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=test
 
