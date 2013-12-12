@@ -1,19 +1,21 @@
 >> Running simulator for all traces ...
 .. Baseline traces ...
 TRACE                LENGTH                USED            UTIL            HIT%
-llu                  24759KB                1KB            100%        73.3984%
+bisort               1208KB                 1KB            100%        70.4761%
+llu.pool             24759KB                1KB            100%        71.6385%
+llu                  24759KB                1KB            100%        73.2228%
 simple               0KB               0.0625KB           6.25%             60%
 sort-100.pool        324KB                  1KB            100%        96.5467%
 sort-100             324KB                  1KB            100%        86.0608%
 sort.pool            7583KB                 1KB            100%        87.3365%
 sort                 7582KB                 1KB            100%        70.5767%
-test                 0KB              0.15625KB         15.625%        83.3333%
 .. Base-Delta traces ...
 TRACE                LENGTH                USED            UTIL            HIT%
-llu                  24759KB         0.226562KB        22.6562%        72.6616%
+bisort               1208KB          0.179688KB        17.9688%        72.4129%
+llu.pool             24759KB         0.226562KB        22.6562%        71.2125%
+llu                  24759KB         0.226562KB        22.6562%        72.7681%
 simple               0KB              0.03125KB          3.125%             60%
 sort-100.pool        324KB             0.1875KB          18.75%        92.1558%
 sort-100             324KB           0.226562KB        22.6562%        71.0215%
 sort.pool            7583KB           0.15625KB         15.625%        85.5279%
 sort                 7582KB          0.226562KB        22.6562%         67.193%
-test                 0KB             0.148438KB        14.8438%        83.3333%
