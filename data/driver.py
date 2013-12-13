@@ -51,8 +51,15 @@ for filename in files:
 if args.csv:
   print '.. Saving to CSV file ...',
   f = open(args.csv, 'w')
+  # Baseline
+  f.write('Baseline' + '\n')
   f.write(data.Result.csv_header() + '\n')
   for el in base_data:
+    f.write(el.csv() + '\n')
+  # Base-Delta
+  f.write('Base-Delta' + '\n')
+  f.write(data.Result.csv_header() + '\n')
+  for el in bdi_data:
     f.write(el.csv() + '\n')
   f.close()
   print 'Done!'
