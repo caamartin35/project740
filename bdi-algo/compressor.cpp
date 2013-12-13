@@ -31,14 +31,14 @@ Compressor::Compressor(int size, int ways, int block_size) {
     data_store[i].resize(block_size * ways);
   }
 
-  // memory utilization
-  used = 0;
-
   // initialize counters
   requests = 0;
   hits = 0;
   misses = 0;
   evictions = 0;
+
+  // more stats
+  used = 0;
 }
 
 void Compressor::Cycle() {
@@ -81,6 +81,44 @@ bool Compressor::Store(pointer_t address, size_t size, data_t data) {
     insert(address, size, data);
     return true;
   }
+}
+
+BaseDeltaStats Compressor::Stats() const {
+  BaseDeltaStats stats;
+  stats.requests = requests;
+  stats.hits = hits;
+  stats.misses = misses;
+  stats.evictions = evictions;
+  stats.used_space = used;
+  // compute the rest
+  stats.used_blocks = 0;
+  stats.zero_blocks = 0;
+  stats.rep_blocks = 0;
+  stats.medium_blocks = 0;
+  stats.large_blocks = 0;
+  // iterate
+  for (int i = 0; i < tag_store.size(); i++) {
+    const list<Tag>& tags = tag_store[i];
+    list<Tag>::const_iterator it;
+    for (it = tags.begin(); it != tags.end(); ++it) {
+      const Tag& tag = *it;
+      if (!tag.valid) continue;
+      stats.used_blocks++;
+      switch (tag.mode) {
+        case ZEROS:
+          stats.zero_blocks++; break;
+        case REP_VALUES:
+          stats.rep_blocks++; break;
+        case BASE4_DELTA2:
+        case BASE8_DELTA4:
+        case NO_COMPRESS:
+          stats.large_blocks++; break;
+        default:
+          stats.medium_blocks++;
+      }
+    }
+  }
+  return stats;
 }
 
 

@@ -7,10 +7,20 @@
 #include <list>
 #include <vector>
 
+#include "../lib/stats.h"
 #include "../lib/types.h"
 
 #include "tag.h"
 #include "util.h"
+
+class BaseDeltaStats : public Stats {
+ public:
+  int used_blocks;
+  int zero_blocks;
+  int rep_blocks;
+  int medium_blocks;
+  int large_blocks;
+};
 
 class Compressor {
  public:
@@ -18,6 +28,7 @@ class Compressor {
   bool Load(pointer_t address, size_t size, data_t data);
   bool Store(pointer_t address, size_t size, data_t data);
   void Cycle();
+  BaseDeltaStats Stats() const;
   void Print() const;
   // data
   int size;
@@ -25,11 +36,12 @@ class Compressor {
   int ways;
   int block_size;
   // stats
-  int used;
   int requests;
   int hits;
   int misses;
   int evictions;
+  // more stats
+  int used;
 
  private:
   // compression

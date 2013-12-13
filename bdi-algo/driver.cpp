@@ -12,6 +12,7 @@ int main(int argc, char const *argv[]) {
     cout << "Usage: ./driver [trace_file]" << endl;
     return 1;
   }
+  int extras = 1;
   int verbose = 0;
 
   // initialize
@@ -69,5 +70,17 @@ int main(int argc, char const *argv[]) {
   cout << "   hits = " << compressor.hits << " - " << hit_frac << "%" <<  endl;
   cout << "   misses = " << compressor.misses << " - " << miss_frac << "%" << endl;
   cout << "   evictions = " << compressor.evictions << endl;
+
+  // print out extras
+  if (extras > 0) {
+    BaseDeltaStats stats = compressor.Stats();
+    cout << "   used_blocks = " << stats.used_blocks << endl;
+    cout << "   zero_blocks = " << stats.zero_blocks << endl;
+    cout << "   rep_blocks = " << stats.rep_blocks << endl;
+    cout << "   medium_blocks = " << stats.medium_blocks << endl;
+    cout << "   large_blocks = " << stats.large_blocks << endl;
+  }
+
+  // return
   return 0;
 }
