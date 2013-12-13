@@ -42,16 +42,42 @@
 #endif
 
 
-// global trace file
-trace_t trace;
-
-
-/* This file should compile stand alone */
+//
+// data types
+//
 
 struct element {
+  int index; // untracked
   struct element *next;
   int count;
 };
+typedef struct element element_t;
+
+
+//
+// global trace file
+//
+#define MAX_LEN 5000
+trace_t trace;
+struct element **lists;
+int* counts;
+element_t** nexts;
+
+
+//
+// Globals
+//
+
+#define ALLOC_SIZE 127 /* pick wierd num to break strides */
+struct element *free_list = NULL;
+int next_free = ALLOC_SIZE;
+int element_size = 32;
+int num_allocated = 0;
+
+
+//
+// Functions
+//
 
 void usage(char *name) {
   printf("%s:\n", name);
@@ -64,30 +90,17 @@ void usage(char *name) {
   printf("[-t] (insert at (T)ail of list, default off)\n");
 }
 
-#define ALLOC_SIZE 127 /* pick wierd num to break strides */
-struct element *free_list = NULL;
-int next_free = ALLOC_SIZE;
-int element_size = 32;
-int num_allocated = 0;
+element_t* allocate() {
+  struct element* real = (element_t*) malloc(sizeof(element_t));
+  real->index = num_allocated;
+  num_allocated++;
+  return real;
+}
 
-#if 1
-struct element *
-allocate() {
-  if (next_free == ALLOC_SIZE) {
-   next_free = 0;
-   free_list = (struct element *) malloc (ALLOC_SIZE * element_size);
-   assert(free_list != 0);
-  }
-  num_allocated ++;
-  return (struct element *)
-   (((char *)free_list) + ((next_free ++) * element_size));
-}
-#else
-struct element * allocate() {
-  num_allocated ++;
-  return (struct element*)malloc(sizeof(struct element));
-}
-#endif
+
+//
+// Main routines
+//
 
 int main(int argc, char *argv[]) {
   // init the tracer
@@ -98,16 +111,13 @@ int main(int argc, char *argv[]) {
    dirty = 1,
    num_lists = 98, // 196
    tail = 1,
-   initial_length = 1;
+   initial_length = 10;
   float growth_rate = 0.333;
   char c = 0;
   int i = 0, j = 0, k = 0;
   int accumulate = 0;
   trace_store(&trace, &accumulate, sizeof(accumulate), (data_t)accumulate);
-
-  struct element **lists = NULL;
   float growth = 0.0;
-
   int arg = 1;
 
   printf("This benchmark modified USE hard coded pool allocation.\n");
@@ -134,14 +144,12 @@ int main(int argc, char *argv[]) {
    }
   }
 
-  assert (element_size > sizeof(struct element));
-  assert (initial_length > 0);
-
-  /* build lists */
+  // pooling
+  counts = (int*) malloc(MAX_LEN * sizeof(int));
+  nexts = (element_t**) malloc(MAX_LEN * sizeof(element_t*));
   lists = (struct element **) malloc (num_lists * sizeof(struct element *));
-  trace_store(&trace, &lists, sizeof(lists), (data_t)lists);
-  assert(lists != 0);
 
+  // initialize list of lists
   for (i = 0; i < num_lists; i++) {
     lists[i] = NULL;
     trace_store(&trace, &lists[i], sizeof(lists[i]), (data_t)lists[i]);
@@ -154,8 +162,12 @@ int main(int argc, char *argv[]) {
       e->next = lists[j];
       e->count = 0;
       lists[j] = e;
-      trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
-      trace_store(&trace, &e->count, sizeof(e->count), (data_t)e->count);
+      // trace
+      int index = e->index;
+      nexts[index] = e->next;
+      counts[index] = e->count;
+      trace_store(&trace, &nexts[index], sizeof(nexts[index]), (data_t)nexts[index]);
+      trace_store(&trace, &counts[index], sizeof(counts[index]), (data_t)counts[index]);
       trace_store(&trace, &lists[j], sizeof(lists[j]), (data_t)lists[j]);
     }
   }
@@ -167,18 +179,20 @@ int main(int argc, char *argv[]) {
    }
    /* traverse lists */
    for (j = 0 ; j < num_lists ; j ++) {
-    struct element *trav = lists[j];
+    element_t* trav = lists[j];
     trace_load(&trace, &lists[j], sizeof(lists[j]), (data_t)lists[j]);
     while (trav != NULL) {
+      int index = trav->index;
       trace_load(&trace, &accumulate, sizeof(accumulate), (data_t)accumulate);
       accumulate += trav->count;
       trace_store(&trace, &accumulate, sizeof(accumulate), (data_t)accumulate);
       if (dirty) {
-       trace_load(&trace, &trav->count, sizeof(trav->count), (data_t)trav->count);
+       trace_load(&trace, &counts[index], sizeof(counts[index]), (data_t)counts[index]);
        trav->count++;
-       trace_store(&trace, &trav->count, sizeof(trav->count), (data_t)trav->count);
+       counts[index] = trav->count;
+       trace_store(&trace, &counts[index], sizeof(counts[index]), (data_t)counts[index]);
       }
-      trace_load(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+      trace_load(&trace, &nexts[index], sizeof(nexts[index]), (data_t)nexts[index]);
       trav = trav->next;
     }
    }
@@ -190,22 +204,33 @@ int main(int argc, char *argv[]) {
    for ( ; j > 0 ; j --) {
     for (k = 0 ; k < num_lists ; k ++) {
       struct element *e = allocate();
+      int index = e->index;
       e->count = k+j;
-      trace_store(&trace, &e->count, sizeof(e->count), (data_t)e->count);
+      counts[index] = e->count;
+      trace_store(&trace, &counts[index], sizeof(counts[index]), (data_t)counts[index]);
       if (tail) {
        struct element *trav = lists[k];
        trace_load(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[j]);
+       int index1 = trav->index;
        while (trav->next != NULL) {
-        trace_load(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+        trace_load(&trace, &nexts[index1], sizeof(nexts[index1]), (data_t)nexts[index1]);
         trav = trav->next;
        }
+
+       // trace
        trav->next = e;
-       trace_store(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+       nexts[index1] = trav->next;
+       trace_store(&trace, &nexts[index1], sizeof(nexts[index1]), (data_t)nexts[index1]);
+
+       // trace
        e->next = NULL;
-       trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
+       nexts[index] = e->next;
+       trace_store(&trace, &nexts[index], sizeof(nexts[index]), (data_t)nexts[index]);
       } else {
        e->next = lists[k];
-       trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
+       nexts[index] = e->next;
+       trace_load(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[k]);
+       trace_store(&trace, &nexts[index], sizeof(nexts[index]), (data_t)nexts[index]);
        lists[k] = e;
        trace_store(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[k]);
       }

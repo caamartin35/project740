@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
    dirty = 1,
    num_lists = 98, // 196
    tail = 1,
-   initial_length = 1;
+   initial_length = 10;
   float growth_rate = 0.333;
   char c = 0;
   int i = 0, j = 0, k = 0;
@@ -134,14 +134,10 @@ int main(int argc, char *argv[]) {
    }
   }
 
-  assert (element_size > sizeof(struct element));
-  assert (initial_length > 0);
-
   /* build lists */
   lists = (struct element **) malloc (num_lists * sizeof(struct element *));
-  trace_store(&trace, &lists, sizeof(lists), (data_t)lists);
-  assert(lists != 0);
 
+  // initialize the lists
   for (i = 0; i < num_lists; i++) {
     lists[i] = NULL;
     trace_store(&trace, &lists[i], sizeof(lists[i]), (data_t)lists[i]);
@@ -188,23 +184,28 @@ int main(int argc, char *argv[]) {
    j = growth;
    growth -= j;
    for ( ; j > 0 ; j --) {
-    for (k = 0 ; k < num_lists ; k ++) {
+    for (k = 0 ; k < num_lists ; k++) {
       struct element *e = allocate();
       e->count = k+j;
       trace_store(&trace, &e->count, sizeof(e->count), (data_t)e->count);
       if (tail) {
        struct element *trav = lists[k];
-       trace_load(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[j]);
+       trace_load(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[k]);
        while (trav->next != NULL) {
         trace_load(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
         trav = trav->next;
        }
+
+       // trace
        trav->next = e;
        trace_store(&trace, &trav->next, sizeof(trav->next), (data_t)trav->next);
+
+       // trace
        e->next = NULL;
        trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
       } else {
        e->next = lists[k];
+       trace_load(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[k]);
        trace_store(&trace, &e->next, sizeof(e->next), (data_t)e->next);
        lists[k] = e;
        trace_store(&trace, &lists[k], sizeof(lists[k]), (data_t)lists[k]);

@@ -3,21 +3,22 @@
 TRACE                LENGTH                USED            UTIL            HIT%
 bisort.pool          6456KB                20KB       0.976562%        99.7388%
 bisort               6424KB                32KB         1.5625%        99.5821%
-llu.pool             24759KB          104.938KB         5.1239%        99.6269%
-llu                  24759KB          52.9062KB        2.58331%        99.8119%
+llu.pool             35639KB          50.2188KB        2.45209%        99.8829%
+llu                  37762KB          66.6562KB         3.2547%        99.8446%
 simple               0KB               0.0625KB     0.00305176%             60%
 sort-100.pool        324KB              1.375KB      0.0671387%        99.6033%
 sort-100             324KB              1.625KB      0.0793457%        99.5312%
 sort.pool            7583KB           6.40625KB       0.312805%        99.9198%
 sort                 7582KB           7.84375KB       0.382996%        99.9018%
-.. Base-Delta traces ...
+.. Base-Delta traces ... 
 TRACE                LENGTH                USED            UTIL            HIT%
 bisort.pool          6456KB            17.625KB       0.860596%        99.7388%
 bisort               6424KB           27.9531KB         1.3649%        99.5821%
-llu.pool             24759KB          43.7969KB        2.13852%        92.6207%
-llu                  24759KB          28.9531KB        1.41373%        95.1947%
+llu.pool             35639KB          17.8828KB       0.873184%        99.4229%
+llu                  37762KB          60.4844KB        2.95334%        99.4966%
 simple               0KB              0.03125KB     0.00152588%             60%
 sort-100.pool        324KB               0.75KB      0.0366211%        99.6033%
 sort-100             324KB            1.46875KB      0.0717163%        99.5312%
 sort.pool            7583KB           3.46875KB       0.169373%        99.9198%
 sort                 7582KB           7.46875KB       0.364685%        99.9018%
+.. Saving to CSV file ... Done!
