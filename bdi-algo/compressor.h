@@ -10,6 +10,7 @@
 #include "../lib/stats.h"
 #include "../lib/types.h"
 
+#include "base_delta.h"
 #include "tag.h"
 #include "util.h"
 
@@ -44,18 +45,11 @@ class Compressor {
   int used;
 
  private:
-  // compression
-  void decompress(const Tag& tag, const std::vector<byte_t>& data, std::vector<byte_t>* out_data);
-  void compress(const std::vector<byte_t>& data, std::vector<byte_t>* out_data, compression_t* out_compression);
-  bool allZeros(const std::vector<byte_t>& line);
-  bool allSame(const std::vector<byte_t>& line, segment_t* out_value);
-  bool packBaseDelta(const std::vector<byte_t>& line, size_t base_size, size_t delta_size, std::vector<byte_t>* out_line);
-  void unpackBaseDelta(const std::vector<byte_t> compressed, size_t base, size_t delta, std::vector<byte_t>* out_data);
-  // helpers
+  // set operations
   void insert(pointer_t address, size_t size, data_t data);
   void evict(std::list<Tag>* tags);
-  int space(const std::list<Tag>& tags, size_t size);
-  bool inUse(const std::list<Tag>& tags, int segment);
+  int space(const std::list<Tag>& tags);
+  // tag operations
   Tag* contains(std::list<Tag>* tags, pointer_t needle);
   Tag* allocateTag(std::list<Tag>* tags);
   void deallocateTag(Tag* tag);
@@ -70,7 +64,6 @@ class Compressor {
   int bib_bits;
   // memory
   std::vector<std::list<Tag> > tag_store;
-  std::vector<std::vector<byte_t> > data_store;
 };
 
 #endif
