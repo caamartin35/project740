@@ -48,6 +48,7 @@ bool Compressor::Load(pointer_t address, size_t size, data_t data) {
   pointer_t tag_value = getTag(address);
   list<Tag>* tags = &tag_store[index];
   Tag* tag = contains(tags, tag_value);
+  cout << "[load] set = " << index << ", tag = 0x" << std::hex << tag_value << std::dec << endl;
   if (!tag) {
     requests++;
     misses++;
@@ -68,6 +69,7 @@ bool Compressor::Store(pointer_t address, size_t size, data_t data) {
   list<Tag>* tags = &tag_store[index];
   pointer_t needle = getTag(address);
   Tag *tag = contains(tags, needle);
+  cout << "[store] set = " << index << ", tag = 0x" << std::hex << needle << std::dec << endl;
   if (!tag) {
     requests++;
     misses++;
@@ -148,13 +150,12 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
   writeBytes(data, bib, size, &line);
 
   // make sure to get a tag!
-  // this really should only run once.
-  while (!(tag = allocateTag(tags)))
-    evict(tags);
+  if (!tag) tag = allocateTag(tags);
 
   // allocate tag, see if we are over capacity
   tag = touchTag(tags, *tag);
   tag->Allocate(tag_value, line);
+  cout << "[insert] new_size = " << tag->size_aligned << endl;
   while (space(*tags) > (ways * block_size))
     evict(tags);
 
@@ -165,7 +166,7 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
 
 // if every block is invalid, this does nothing
 void Compressor::evict(list<Tag>* tags) {
-  // cout << "[evict]" << endl;
+  cout << "[evict]" << endl;
   Tag* oldest = NULL;
   list<Tag>::reverse_iterator iter;
   for (iter = tags->rbegin(); iter != tags->rend(); ++iter) {
@@ -210,7 +211,9 @@ Tag* Compressor::allocateTag(list<Tag>* tags) {
     if (!tag->valid)
       return tag;
   }
-  return NULL;
+  // evict then return one
+  evict(tags);
+  return allocateTag(tags);
 }
 
 void Compressor::deallocateTag(Tag* tag) {
