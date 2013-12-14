@@ -40,7 +40,6 @@ Compressor::Compressor(int size, int ways, int block_size) {
 void Compressor::Cycle() {
   // any cycling logic (per mem operation)
   // maintain stats, etc.
-  cout << endl;
 }
 
 bool Compressor::Load(pointer_t address, size_t size, data_t data) {
@@ -48,17 +47,14 @@ bool Compressor::Load(pointer_t address, size_t size, data_t data) {
   pointer_t tag_value = getTag(address);
   list<Tag>* tags = &tag_store[index];
   Tag* tag = contains(tags, tag_value);
-  cout << "[load] set = " << index << ", tag = 0x" << std::hex << tag_value << std::dec << endl;
   if (!tag) {
     requests++;
     misses++;
-    cout << "[load] miss" << endl;
     insert(address, size, data);
     return false;
   } else {
     requests++;
     hits++;
-    cout << "[load] hit" << endl;
     touchTag(tags, *tag);
     return true;
   }
@@ -69,17 +65,14 @@ bool Compressor::Store(pointer_t address, size_t size, data_t data) {
   list<Tag>* tags = &tag_store[index];
   pointer_t needle = getTag(address);
   Tag *tag = contains(tags, needle);
-  cout << "[store] set = " << index << ", tag = 0x" << std::hex << needle << std::dec << endl;
   if (!tag) {
     requests++;
     misses++;
-    cout << "[store] miss" << endl;
     insert(address, size, data);
     return false;
   } else {
     requests++;
     hits++;
-    cout << "[store] hit" << endl;
     insert(address, size, data);
     return true;
   }
@@ -143,9 +136,6 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
   if (tag) {
     used -= tag->size_aligned;
     line = tag->data;
-    cout << "[insert] hit, data.size = " << tag->data.size() << endl;
-  } else {
-    cout << "[insert] miss, line.size = " << line.size() << endl;
   }
   writeBytes(data, bib, size, &line);
 
@@ -153,29 +143,29 @@ void Compressor::insert(pointer_t address, size_t size, data_t data) {
   if (!tag) tag = allocateTag(tags);
 
   // allocate tag, see if we are over capacity
-  tag = touchTag(tags, *tag);
   tag->Allocate(tag_value, line);
-  cout << "[insert] new_size = " << tag->size_aligned << endl;
+  tag = touchTag(tags, *tag);
   while (space(*tags) > (ways * block_size))
     evict(tags);
 
   // update the usage stats
   used += tag->size_aligned;
-  cout << "[insert] size = " << tag->size_aligned << ", used = " << used << endl;
 }
 
 // if every block is invalid, this does nothing
 void Compressor::evict(list<Tag>* tags) {
-  cout << "[evict]" << endl;
   Tag* oldest = NULL;
   list<Tag>::reverse_iterator iter;
   for (iter = tags->rbegin(); iter != tags->rend(); ++iter) {
-    if (iter->valid)
+    if (iter->valid) {
       oldest = &(*iter);
+      break;
+    }
   }
-  if (oldest)
+  if (oldest) {
     deallocateTag(oldest);
-  evictions++;
+    evictions++;
+  }
 }
 
 int Compressor::space(const list<Tag>& tags) {
@@ -225,6 +215,10 @@ void Compressor::deallocateTag(Tag* tag) {
 Tag* Compressor::touchTag(list<Tag>* tags, Tag tag) {
   tags->remove(tag);
   tags->push_front(tag);
+  if (tags->size() != ways * 2) {
+    cout << "tags.size = " << tags->size() << endl;
+    exit(1);
+  }
   return &tags->front();
 }
 

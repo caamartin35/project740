@@ -12,10 +12,12 @@ DIR_BDI = '../bdi-algo'
 EXT_BASE = 'trace'
 EXT_POOL = 'pool.trace'
 EXE_DRIVER = 'driver'
+TRACE_TEST = 'test.'
 
 # parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-summary', help='Only show the results summary.', action='store_true')
+parser.add_argument('-tests', help='Also test and debug traces.', action='store_true')
 parser.add_argument('-csv', nargs='?', const='results.csv')
 args = parser.parse_args()
 
@@ -25,6 +27,8 @@ print '>> Running simulator for all traces ...'
 # get trace files
 match = '/'.join([DIR_TRACES, '*.' + EXT_BASE])
 files = glob.glob(match)
+if not args.tests:
+  files = [f for f in files if TRACE_TEST not in f]
 
 # baseline jobs
 print '.. Baseline traces ...'
