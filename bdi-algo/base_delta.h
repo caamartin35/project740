@@ -1,16 +1,18 @@
 #ifndef __BASE_DELTA_H__
 #define __BASE_DELTA_H__
 
+#include <iostream>
+
 #include "../lib/types.h"
 
 #include "util.h"
 
-#define BASE2              2
-#define BASE4              4
-#define BASE8              8
-#define DELTA1             1
-#define DELTA2             2
-#define DELTA4             4
+#define BASE2   2
+#define BASE4   4
+#define BASE8   8
+#define DELTA1  1
+#define DELTA2  2
+#define DELTA4  4
 
 typedef enum {
   ZEROS,

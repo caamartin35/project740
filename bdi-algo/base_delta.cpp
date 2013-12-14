@@ -1,5 +1,8 @@
 #include "base_delta.h"
 
+using std::cout;
+using std::endl;
+
 compression_t BaseDelta::Compress(const bytes_t& data) {
   // try each scheme in order of best to worst compression
   if (allZeros(data)) return ZEROS;

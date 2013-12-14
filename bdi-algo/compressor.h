@@ -53,7 +53,7 @@ class Compressor {
   Tag* contains(std::list<Tag>* tags, pointer_t needle);
   Tag* allocateTag(std::list<Tag>* tags);
   void deallocateTag(Tag* tag);
-  Tag* touchTag(std::list<Tag>* tags, const Tag& tag);
+  Tag* touchTag(std::list<Tag>* tags, Tag tag);
   // dimensions
   pointer_t getTag(pointer_t address);
   pointer_t getSet(pointer_t address);
