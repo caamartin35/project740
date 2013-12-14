@@ -16,7 +16,7 @@ The driver has a few built in options.
 
 - `-h` - Print usage and list options.
 - `-csv` - Output the results in CSV format to the given file (`results.csv` by default).
-- `-test` - Also run traces prefixed with `test.`.
+- `-test` - Also run traces prefixed with `test.`
 
 
 ### Traces

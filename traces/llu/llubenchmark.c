@@ -91,10 +91,10 @@ struct element * allocate() {
 
 int main(int argc, char *argv[]) {
   // init the tracer
-  trace_init(&trace, "../outputs/llu.trace");
+  trace_init(&trace, "../outputs/test.llu.trace");
 
   // configuration
-  int max_iterations = 100, // 1000
+  int max_iterations = 200, // 1000
    dirty = 1,
    num_lists = 98, // 196
    tail = 1,
