@@ -1,5 +1,6 @@
 # specific
 ~*
+*.log
 
 # Object files
 *.o
