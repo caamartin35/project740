@@ -215,8 +215,14 @@ int main(int argc, char *argv[]) {
   }
 
   // print the results
-  printf ("output = %d\n", accumulate);
-  printf ("num allocated %d\n", num_allocated);
+  printf("output = %d\n", accumulate);
+  printf("num allocated %d\n", num_allocated);
+
+  // figure out the working set size of the application
+  size_t working_set = 0;
+  working_set += (num_allocated * sizeof(struct element));
+  working_set += (num_lists * sizeof(struct element*));
+  printf("working set size = %lu", working_set / 1024);
   return 0;
 }
 
