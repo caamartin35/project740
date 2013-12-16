@@ -44,14 +44,14 @@ void sort(int* values, char* flags, node_t** nexts, int len) {
 
 int main(int argc, char const *argv[]) {
   // set up tracer
-  trace_init(&trace, "../outputs/sort.pool.trace");
+  trace_init(&trace, "../outputs/test.sort.pool.trace");
   printf(">> Generating memory trace ...\n");
 
   // set up random numbers
   srand(7);
 
   // create a bunch of nodes
-  int num_nodes = 1000;
+  int num_nodes = 5000;
   int* node_datas = (int*) malloc(num_nodes * sizeof(int));
   char* node_flags = (char*) malloc(num_nodes * sizeof(char));
   node_t** node_nexts = (node_t**) malloc(num_nodes * sizeof(node_t*));
