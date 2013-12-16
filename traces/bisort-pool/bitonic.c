@@ -31,8 +31,7 @@ int flag = 0;
 int foo = 0;
 int count = 0;
 int* values;
-node_t** lefts;
-node_t** rights;
+node_t** children;
 
 
 //
@@ -45,11 +44,11 @@ node_t** rights;
   h->left = NIL; \
   h->right = NIL; \
   values[count] = v; \
-  lefts[count] = NIL; \
-  rights[count] = NIL; \
+  children[count] = NIL; \
+  children[1+count] = NIL; \
   trace_store(&trace, &values[count], sizeof(values[count]), (data_t)values[count]); \
-  trace_store(&trace, &lefts[count], sizeof(lefts[count]), (data_t)lefts[count]); \
-  trace_store(&trace, &rights[count], sizeof(rights[count]), (data_t)rights[count]); \
+  trace_store(&trace, &children[count], sizeof(children[count]), (data_t)children[count]); \
+  trace_store(&trace, &children[1+count], sizeof(children[1+count]), (data_t)children[1+count]); \
   count++; \
 };
 
@@ -66,8 +65,8 @@ void InOrder(HANDLE *h) {
     r = h->right;
     // pooling sim
     int i = h->index;
-    trace_load(&trace, &lefts[i], sizeof(lefts[i]), (data_t)lefts[i]);
-    trace_load(&trace, &rights[i], sizeof(rights[i]), (data_t)rights[i]);
+    trace_load(&trace, &children[i], sizeof(children[i]), (data_t)children[i]);
+    trace_load(&trace, &children[1+i], sizeof(children[1+i]), (data_t)children[1+i]);
     InOrder(l);
     // static unsigned char counter = 0;
     // if (counter++ == 0)   /* reduce IO */
@@ -114,10 +113,10 @@ HANDLE* RandTree(int n, int seed, int node, int level) {
     h->right = f_right.value;
     // pooling sim
     int i = h->index;
-    lefts[i] = h->left;
-    rights[i] = h->right;
-    trace_store(&trace, &lefts[i], sizeof(lefts[i]), (data_t)lefts[i]);
-    trace_store(&trace, &rights[i], sizeof(rights[i]), (data_t)rights[i]);
+    children[i] = h->left;
+    children[1+i] = h->right;
+    trace_store(&trace, &children[i], sizeof(children[i]), (data_t)children[i]);
+    trace_store(&trace, &children[1+i], sizeof(children[1+i]), (data_t)children[1+i]);
   } else {
     h = 0;
   }
@@ -158,12 +157,12 @@ int lval, rval;
   int right = r->index;
   values[left] = rval;
   values[right] = lval;
-  lefts[right] = ll;
-  lefts[left] = rl;
+  children[right] = ll;
+  children[left] = rl;
   trace_store(&trace, &values[left], sizeof(values[left]), (data_t)values[left]);
   trace_store(&trace, &values[right], sizeof(values[right]), (data_t)values[right]);
-  trace_store(&trace, &lefts[left], sizeof(lefts[left]), (data_t)lefts[left]);
-  trace_store(&trace, &lefts[right], sizeof(lefts[right]), (data_t)lefts[right]);
+  trace_store(&trace, &children[left], sizeof(children[left]), (data_t)children[left]);
+  trace_store(&trace, &children[right], sizeof(children[right]), (data_t)children[right]);
 }
 
 
@@ -186,13 +185,13 @@ int lval, rval;
   int right = r->index;
   values[left] = rval;
   values[right] = lval;
-  rights[right] = lr;
-  rights[left] = rr;
+  children[1+right] = lr;
+  children[1+left] = rr;
   /*printf("Swap Val Right l 0x%x,r 0x%x val: %d %d\n",l,r,lval,rval);*/
   trace_store(&trace, &values[left], sizeof(values[left]), (data_t)values[left]);
   trace_store(&trace, &values[right], sizeof(values[right]), (data_t)values[right]);
-  trace_store(&trace, &rights[left], sizeof(rights[left]), (data_t)rights[left]);
-  trace_store(&trace, &rights[right], sizeof(rights[right]), (data_t)rights[right]);
+  trace_store(&trace, &children[1+left], sizeof(children[1+left]), (data_t)children[1+left]);
+  trace_store(&trace, &children[1+right], sizeof(children[1+right]), (data_t)children[1+right]);
 }
 
 int
@@ -216,8 +215,8 @@ int spr_val,dir;
   pr = root->right;
   int index = root->index;
   trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
-  trace_load(&trace, &lefts[index], sizeof(lefts[index]), (data_t)lefts[index]);
-  trace_load(&trace, &rights[index], sizeof(rights[index]), (data_t)rights[index]);
+  trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
+  trace_load(&trace, &children[1+index], sizeof(children[1+index]), (data_t)children[1+index]);
 
   // exchange logic
   rightexchange = ((rv > spr_val) ^ dir);
@@ -241,11 +240,11 @@ int spr_val,dir;
       int left = pl->index;
       int right = pr->value;
       trace_load(&trace, &values[left], sizeof(values[left]), (data_t)values[left]);
-      trace_load(&trace, &lefts[left], sizeof(lefts[left]), (data_t)lefts[left]);
-      trace_load(&trace, &rights[left], sizeof(rights[left]), (data_t)rights[left]);
+      trace_load(&trace, &children[left], sizeof(children[left]), (data_t)children[left]);
+      trace_load(&trace, &children[1+left], sizeof(children[1+left]), (data_t)children[1+left]);
       trace_load(&trace, &values[right], sizeof(values[right]), (data_t)values[right]);
-      trace_load(&trace, &lefts[right], sizeof(lefts[right]), (data_t)lefts[right]);
-      trace_load(&trace, &rights[right], sizeof(rights[right]), (data_t)rights[right]);
+      trace_load(&trace, &children[right], sizeof(children[right]), (data_t)children[right]);
+      trace_load(&trace, &children[1+right], sizeof(children[1+right]), (data_t)children[1+right]);
 
       elementexchange = ((lv > rv) ^ dir);
       if (rightexchange)
@@ -272,15 +271,15 @@ int spr_val,dir;
           }
     }
 
-  trace_load(&trace, &lefts[index], sizeof(lefts[index]), (data_t)lefts[index]);
+  trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
   if (root->left != NIL) {
     int value;
     rl = root->left;
     rr = root->right;
     value = root->value;
     trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
-    trace_load(&trace, &lefts[index], sizeof(lefts[index]), (data_t)lefts[index]);
-    trace_load(&trace, &rights[index], sizeof(rights[index]), (data_t)rights[index]);
+    trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
+    trace_load(&trace, &children[1+index], sizeof(children[1+index]), (data_t)children[1+index]);
     // recursion
     root->value = Bimerge(rl,value,dir);
     values[index] = root->value;
@@ -305,7 +304,7 @@ int spr_val,dir;
   int val;
   /*printf("bisort %x\n", root);*/
   int index = root->index;
-  trace_load(&trace, &lefts[index], sizeof(lefts[index]), (data_t)lefts[index]);
+  trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
   if (root->left == NIL) { /* <---- 8.7% load penalty */
     trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
     if ((root->value > spr_val) ^ dir) {
@@ -322,8 +321,8 @@ int spr_val,dir;
     r = root->right;
     val = root->value;
     trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
-    trace_load(&trace, &lefts[index], sizeof(lefts[index]), (data_t)lefts[index]);
-    trace_load(&trace, &rights[index], sizeof(rights[index]), (data_t)rights[index]);
+    trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
+    trace_load(&trace, &children[1+index], sizeof(children[1+index]), (data_t)children[1+index]);
 
     /*printf("root 0x%x, l 0x%x, r 0x%x\n", root,l,r);*/
     root->value=Bisort(l,val,dir);
@@ -352,8 +351,7 @@ int main(int argc, char **argv) {
 
   // pool allocate memory
   values = (int*) malloc(n * sizeof(int));
-  lefts = (node_t**) malloc(n * sizeof(node_t*));
-  rights = (node_t**) malloc(n * sizeof(node_t*));
+  children = (node_t**) malloc(n * sizeof(node_t*));
 
   // create tree
   h = RandTree(n,12345768,0,0);

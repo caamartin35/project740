@@ -83,12 +83,12 @@ Our idea is simple. Arrange data in memory optimally for BD compression. Data sp
 
 \subsection{Low-Compressibility Cases}Let us start with a favorable case for B+$\Delta$ compression. For example, placing pointer-like values with other pointer-like values is preferable to having a pointer next to a boolean flag. The mathematic difference between a pointer-value and a boolean-value is obviously some large delta, which is useless for compression.  Less obvious, perhaps, is that the most significant bits of pointers are usually the same. If the first 32 bits are the same, we can use 4-byte deltas to encode a string of pointers relative to some 8-byte base (assuming a 64-bit architecture).However, benchmarks with heavy pointer manipulation and large objects often suffer from poor compressibility. For instance, a linked-list traversal program may have many node structs allocated next to one another in memory. If each node consists of a flag, a counter, and a next-pointer, we might see boolean, integer, and pointer values alternating in memory. Generally, cache lines with such interleaved values are incompressible.
 
-\begin{center}
-\includegraphics[scale=0.27]{mechanisms.pdf}
-\end{center}
-
 \subsection{Data Splitting and Pooling} For such programs, we want to allocate objects such that we maintain spatial locality of similar-valued members. More elaborately, \textbf{split} an object up into its respective members. Allocate space for those members based on what kinds of values they hold--these decisions may be during compile time or runtime, depending on the pooling implementation. Members with similar value-types should be \textbf{pooled} (allocated) together.Expanding on the example from the previous section, we might have separate memory pools for flags, counters, and pointers. This creates contiguous regions of memory with much lower dynamic range. Now, when the next-pointer member of a node is read, the likelihood that the resulting cache fill is B+$\Delta$-compressible is far greater.The key observation here is that B+$\Delta$ compression  can strongly leverage any data transformations that create regions of low dynamic range.
 
+\begin{figure}[bp]
+  \centering
+    \includegraphics[scale=0.27]{mechanisms.pdf}
+\end{figure}
 
 \subsection{Caveats}Some simplifications were made to the above examples for that sake of brevity. For example, a long string of boolean flags in memory is seldom B+$\Delta$-compressible. This is because B+$\Delta$ compression operates at 4-byte and 8-byte granularities. A string of 32 or 64 booleans has high entropy, even for biased distributions for true and false values. Interpreting these strings as integers and computing the differences may result in very large deltas, and low compressibility.
 
@@ -99,7 +99,12 @@ Our idea is simple. Arrange data in memory optimally for BD compression. Data sp
 \subsection{Manual Splitting and Pooling}Splitting objects and pooling their members appropriately was done manually. Later we intend to perform these transformations in the compiler. Nevertheless, there are several drawbacks to this approach.Firstly, hand optimized code-quality is not necessarily achievable by a compiler. As a programmer, one has perfect information about safety, problem size, and the type of data intended for each struct member. Second, pooling often incurs a static memory overhead\cite{mpads}  because the last pool is not always filled (but memory is still reserved).We acknowledge that these factors concede some fidelity from the results. However, because this study is a proof of concept, we felt this was appropriate compromise.
 
 
-\subsection{Baseline Cache Simulator}The baseline simulator represents a 16-way, 32-byte block cache. The cache size is varied throughout the study to observe the interaction between capacity, the working set of the program, and the hit rate. The baseline cache implements a perfect least recently used (LRU) policy.\subsection{B+$\Delta$ Compression Cache Simulator}The B+$\Delta$ cache simulator is correspondingly a 16-way, 32-byte block cache. Again, the cache capacity is varied throughout the study to observe the effect of small space constraints, large working sets, and pooling.The simulator implements a perfect LRU policy. When a newly inserted cache exceeds the size of the set, LRU blocks are evicted until the new block fits. Recent literature, such as Cache Aware Replacement Policies\cite{carp} (CARP) suggests many optimizations to this policy, but they are not simulated here.
+\subsection{Cache Simulators}
+Only a single level memory hierarchy is simulated here. Even though B+$\Delta$ compression is intended to run below the L1 cache, we do not omit L1 hits from our data. Normally the L2 would never see these requests. However, the validity of the data holds as both the baseline and B+$\Delta$ caches appreciate a proportional increase in hits.
+
+\textbf{Baseline simulator} -- a 16-way, 32-byte block cache. The cache size is varied throughout the study to observe the interaction between capacity, the working set of the program, and the hit rate. The baseline cache implements a perfect least recently used (LRU) policy.
+
+\textbf{B+$\Delta$ cache simulator} -- a 16-way, 32-byte block cache. Again, the cache capacity is varied throughout the study to observe the effect of small space constraints, large working sets, and pooling.The simulator implements a perfect LRU policy. When a newly inserted cache line exceeds the size of the set, LRU blocks are evicted until the new block fits. Recent literature, such as Cache Aware Replacement Policies\cite{carp} (CARP) suggests many optimizations to this policy, but they are not simulated here.
 
 
 \bstctlcite{bstctl:etal, bstctl:nodash, bstctl:simpurl}

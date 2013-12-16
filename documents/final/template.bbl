@@ -43,6 +43,10 @@ Y.~Gao R. Silvera J.~Amaral P.~Zhao, S.~Cui, ``Forma: A framework for safe
 J.~Amaral Y. Gao S. Cui R. Silvera R.~Archambault S.~Curial, P.~Zhao,
   ``On-the-fly structure splitting for heap objects,'' \emph{ISMM}, 2008.
 
+\bibitem{carp}
+O.~Mutlu T.~Huberty, G.~Pekhimenko, ``Carp: Cache-aware replacement policies,''
+  2013.
+
 \bibitem{structLayoutHints}
 M.D.Hill T.M.~Chilimbi and J. R.Larus, ``Cache-conscious structure layout.''
   \emph{PLDI}, 1999.

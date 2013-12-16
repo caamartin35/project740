@@ -1,6 +1,7 @@
 # specific
 ~*
 *.log
+test.*.trace
 
 # Object files
 *.o
