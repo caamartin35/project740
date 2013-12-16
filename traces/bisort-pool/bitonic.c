@@ -387,6 +387,8 @@ int main(int argc, char **argv) {
   working += n * sizeof(int);
   working += 2 * n * sizeof(node_t*);
   printf("working set = %luKB\n", working);
+
+  trace_destroy(&trace);
   return 0;
 }
 

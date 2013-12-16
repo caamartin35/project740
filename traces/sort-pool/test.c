@@ -51,7 +51,7 @@ int main(int argc, char const *argv[]) {
   srand(7);
 
   // create a bunch of nodes
-  int num_nodes = 500;
+  int num_nodes = 1000;
   int* node_datas = (int*) malloc(num_nodes * sizeof(int));
   char* node_flags = (char*) malloc(num_nodes * sizeof(char));
   node_t** node_nexts = (node_t**) malloc(num_nodes * sizeof(node_t*));
@@ -60,13 +60,11 @@ int main(int argc, char const *argv[]) {
   for (int i = 0; i < num_nodes; i++) {
     node_datas[i] = rand();
     trace_store(&trace, &node_datas[i], sizeof(node_datas[i]), node_datas[i]);
-  }
-  for (int i = 0; i < num_nodes; i++) {
+
     node_flags[i] = rand() % 2;
     trace_store(&trace, &node_flags[i], sizeof(node_flags[i]), node_flags[i]);
-  }
-  for (int i = 0; i < num_nodes; i++) {
-    node_nexts[i] = NULL;
+
+    node_nexts[i] = (node_t*)(node_datas + (rand() % num_nodes));
     trace_store(&trace, &node_nexts[i], sizeof(node_nexts[i]), (data_t)node_nexts[i]);
   }
 
@@ -74,8 +72,11 @@ int main(int argc, char const *argv[]) {
   sort(node_datas, node_flags, node_nexts, num_nodes);
 
   // clean up
+  size_t working = 0;
+  working += num_nodes * sizeof(node_t);
+  printf(">> working set = %lu\n", working);
   printf(">> Done!\n");
-  trace_destroy(&trace);
 
+  trace_destroy(&trace);
   return 0;
 }

@@ -45,13 +45,13 @@ int main(int argc, char const *argv[]) {
   srand(7);
 
   // create a bunch of nodes
-  int num_nodes = 500;
+  int num_nodes = 1000;
   node_t* nodes = (node_t*) malloc(num_nodes * sizeof(node_t));
   for (int i = 0; i < num_nodes; i++) {
     node_t* node = nodes + i;
     node->data = rand();
     node->flag = rand() % 2;
-    node->next = NULL;
+    node->next = nodes + (rand() % num_nodes);
     // use trace lib to record stores
     trace_store(&trace, &node->data, sizeof(node->data), node->data);
     trace_store(&trace, &node->flag, sizeof(node->flag), node->flag);
@@ -62,8 +62,11 @@ int main(int argc, char const *argv[]) {
   sort(nodes, num_nodes);
 
   // clean up
+  size_t working = 0;
+  working += num_nodes * sizeof(node_t);
+  printf(">> working set = %lu\n", working);
   printf(">> Done!\n");
-  trace_destroy(&trace);
 
+  trace_destroy(&trace);
   return 0;
 }
