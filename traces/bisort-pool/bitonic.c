@@ -39,14 +39,14 @@ node_t** children;
 //
 #define LocalNewNode(h,v) { \
   h = (HANDLE *) malloc(sizeof(struct node)); \
-  h->index = count; \
+  h->index = 2*count; \
   h->value = v; \
   h->left = NIL; \
   h->right = NIL; \
-  values[count] = v; \
+  values[count/2] = v; \
   children[count] = NIL; \
   children[1+count] = NIL; \
-  trace_store(&trace, &values[count], sizeof(values[count]), (data_t)values[count]); \
+  trace_store(&trace, &values[count/2], sizeof(values[count/2]), (data_t)values[count/2]); \
   trace_store(&trace, &children[count], sizeof(children[count]), (data_t)children[count]); \
   trace_store(&trace, &children[1+count], sizeof(children[1+count]), (data_t)children[1+count]); \
   count++; \
@@ -129,14 +129,14 @@ void SwapValue(HANDLE *l, HANDLE *r) {
   int j = r->index;
   temp = l->value;
   temp2 = r->value;
-  trace_load(&trace, &values[i], sizeof(values[i]), (data_t)values[i]);
-  trace_load(&trace, &values[j], sizeof(values[j]), (data_t)values[j]);
+  trace_load(&trace, &values[i/2], sizeof(values[i/2]), (data_t)values[i/2]);
+  trace_load(&trace, &values[j/2], sizeof(values[j/2]), (data_t)values[j/2]);
   r->value = temp;
   l->value = temp2;
-  values[j] = temp;
-  values[i] = temp2;
-  trace_store(&trace, &values[i], sizeof(values[i]), (data_t)values[i]);
-  trace_store(&trace, &values[j], sizeof(values[j]), (data_t)values[j]);
+  values[j/2] = temp;
+  values[i/2] = temp2;
+  trace_store(&trace, &values[i/2], sizeof(values[i/2]), (data_t)values[i/2]);
+  trace_store(&trace, &values[j/2], sizeof(values[j/2]), (data_t)values[j/2]);
 }
 
 void
@@ -155,12 +155,12 @@ int lval, rval;
   l->value = rval;
   int left = l->index;
   int right = r->index;
-  values[left] = rval;
-  values[right] = lval;
+  values[left/2] = rval;
+  values[right/2] = lval;
   children[right] = ll;
   children[left] = rl;
-  trace_store(&trace, &values[left], sizeof(values[left]), (data_t)values[left]);
-  trace_store(&trace, &values[right], sizeof(values[right]), (data_t)values[right]);
+  trace_store(&trace, &values[left/2], sizeof(values[left/2]), (data_t)values[left/2]);
+  trace_store(&trace, &values[right/2], sizeof(values[right/2]), (data_t)values[right/2]);
   trace_store(&trace, &children[left], sizeof(children[left]), (data_t)children[left]);
   trace_store(&trace, &children[right], sizeof(children[right]), (data_t)children[right]);
 }
@@ -183,13 +183,13 @@ int lval, rval;
   // pooling
   int left = l->index;
   int right = r->index;
-  values[left] = rval;
-  values[right] = lval;
+  values[left/2] = rval;
+  values[right/2] = lval;
   children[1+right] = lr;
   children[1+left] = rr;
   /*printf("Swap Val Right l 0x%x,r 0x%x val: %d %d\n",l,r,lval,rval);*/
-  trace_store(&trace, &values[left], sizeof(values[left]), (data_t)values[left]);
-  trace_store(&trace, &values[right], sizeof(values[right]), (data_t)values[right]);
+  trace_store(&trace, &values[left/2], sizeof(values[left/2]), (data_t)values[left/2]);
+  trace_store(&trace, &values[right/2], sizeof(values[right/2]), (data_t)values[right/2]);
   trace_store(&trace, &children[1+left], sizeof(children[1+left]), (data_t)children[1+left]);
   trace_store(&trace, &children[1+right], sizeof(children[1+right]), (data_t)children[1+right]);
 }
@@ -214,7 +214,7 @@ int spr_val,dir;
   pl = root->left;
   pr = root->right;
   int index = root->index;
-  trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+  trace_load(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
   trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
   trace_load(&trace, &children[1+index], sizeof(children[1+index]), (data_t)children[1+index]);
 
@@ -223,8 +223,8 @@ int spr_val,dir;
   if (rightexchange) {
     root->value = spr_val;
     spr_val = rv;
-    values[index] = spr_val;
-    trace_store(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+    values[index/2] = spr_val;
+    trace_store(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
   }
 
   while (pl != NIL)
@@ -239,10 +239,10 @@ int spr_val,dir;
       // pooling
       int left = pl->index;
       int right = pr->value;
-      trace_load(&trace, &values[left], sizeof(values[left]), (data_t)values[left]);
+      trace_load(&trace, &values[left/2], sizeof(values[left/2]), (data_t)values[left/2]);
       trace_load(&trace, &children[left], sizeof(children[left]), (data_t)children[left]);
       trace_load(&trace, &children[1+left], sizeof(children[1+left]), (data_t)children[1+left]);
-      trace_load(&trace, &values[right], sizeof(values[right]), (data_t)values[right]);
+      trace_load(&trace, &values[right/2], sizeof(values[right/2]), (data_t)values[right/2]);
       trace_load(&trace, &children[right], sizeof(children[right]), (data_t)children[right]);
       trace_load(&trace, &children[1+right], sizeof(children[1+right]), (data_t)children[1+right]);
 
@@ -277,13 +277,13 @@ int spr_val,dir;
     rl = root->left;
     rr = root->right;
     value = root->value;
-    trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+    trace_load(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
     trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
     trace_load(&trace, &children[1+index], sizeof(children[1+index]), (data_t)children[1+index]);
     // recursion
     root->value = Bimerge(rl,value,dir);
-    values[index] = root->value;
-    trace_store(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+    values[index/2] = root->value;
+    trace_store(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
 
     spr_val=Bimerge(rr,spr_val,dir);
   }
@@ -306,28 +306,28 @@ int spr_val,dir;
   int index = root->index;
   trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
   if (root->left == NIL) { /* <---- 8.7% load penalty */
-    trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+    trace_load(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
     if ((root->value > spr_val) ^ dir) {
       val = spr_val;
       spr_val = root->value;
-      trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+      trace_load(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
       root->value = val;
-      values[index] = val;
-      trace_store(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+      values[index/2] = val;
+      trace_store(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
     }
   } else {
     int ndir;
     l = root->left;
     r = root->right;
     val = root->value;
-    trace_load(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+    trace_load(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
     trace_load(&trace, &children[index], sizeof(children[index]), (data_t)children[index]);
     trace_load(&trace, &children[1+index], sizeof(children[1+index]), (data_t)children[1+index]);
 
     /*printf("root 0x%x, l 0x%x, r 0x%x\n", root,l,r);*/
     root->value=Bisort(l,val,dir);
-    values[index] = root->value;
-    trace_store(&trace, &values[index], sizeof(values[index]), (data_t)values[index]);
+    values[index/2] = root->value;
+    trace_store(&trace, &values[index/2], sizeof(values[index/2]), (data_t)values[index/2]);
 
     ndir = !dir;
     spr_val=Bisort(r,spr_val,ndir);
@@ -351,7 +351,7 @@ int main(int argc, char **argv) {
 
   // pool allocate memory
   values = (int*) malloc(n * sizeof(int));
-  children = (node_t**) malloc(n * sizeof(node_t*));
+  children = (node_t**) malloc(2 * n * sizeof(node_t*));
 
   // create tree
   h = RandTree(n,12345768,0,0);
@@ -382,6 +382,11 @@ int main(int argc, char **argv) {
     printf("%d\n",sval);
   }
 
+  // working set calculation
+  size_t working = 0;
+  working += n * sizeof(int);
+  working += 2 * n * sizeof(node_t*);
+  printf("working set = %luKB\n", working);
   return 0;
 }
 

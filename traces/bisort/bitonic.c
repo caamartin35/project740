@@ -334,6 +334,11 @@ int main(int argc, char **argv) {
     printf("%d\n",sval);
   }
 
+  // working set calculation
+  size_t working = 0;
+  working += n * sizeof(int);
+  working += 2 * n * sizeof(struct node*);
+  printf("working set = %luKB\n", working);
   return 0;
 }
 

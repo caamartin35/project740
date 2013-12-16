@@ -10,7 +10,7 @@
   #define CONFIG_L2_WAYS             4
   #define CONFIG_L2_BLOCK_SIZE       32
 #else
-  #define CONFIG_L2_SIZE             (1 << 17)
+  #define CONFIG_L2_SIZE             (1 << 20)
   #define CONFIG_L2_WAYS             16
   #define CONFIG_L2_BLOCK_SIZE       32
 #endif
