@@ -7,52 +7,24 @@
 
 \begin{document}
 
-\title{
-Guidelines for Submissions to HPCA 2014}
-
+\title{Enhanced Base-Delta Compression with Data Splitting and Memory Pooling}
+\author{Aditya Bhandaru (\href{mailto:akbhanda@andrew.cmu.edu}{akbhanda@andrew.cmu.edu}) Gennady Pekhimenko (\href{mailto:gpekhime@cs.cmu.edu}{akbhanda@andrew.cmu.edu}) \\
+Onur Mutlu (\href{mailto:onur@cmu.edu}{akbhanda@andrew.cmu.edu})}
 \date{}
 \maketitle
 
 \thispagestyle{empty}
 
 \begin{abstract}
-This document is intended to serve as a sample for submissions to HPCA 2014.
-We provide some guidelines that authors should follow when submitting papers to
-the conference.
+Recent literature on cache compression has shown great potential for increasing the effective cache capacity on chip. Specifically, a technique called Base-Delta (B+$\Delta$) compression has presented excellent compression (about 1.4X) and improvements in overall performance. However, B+$\Delta$ suffers from poor compressibility when adjacent data in memory have a high range in value.
+
+We show here, as proof of concept, that existing techniques such as \textbf{Data Splitting and Memory Pooling can enhance the B+$\Delta$ compressibility} of data in memory. Our simulations over various micro-benchmarks show that B+$\Delta$ with pooling  results in an 8\% reduction in MPKI, and a compression ratio of 2.6X over the baseline.
 \end{abstract}
 
 \section{Introduction}
 
-This document provides the formatting instructions for submissions to the 20th
-Annual IEEE International Symposium on High Performance Computer Architecture,
-2014. In an effort to respect the efforts of reviewers and in
-the interest of fairness to all prospective authors, we request that all
-submissions to HPCA 20 follow the formatting and submission rules detailed
-below.  Submissions that violate these instructions may not be
-reviewed, at the discretion of the program chair, in order to maintain a review
-process that is fair to all potential authors.  This is a generous format,
-with plenty of space -- there should be no need to tweak it in any
-significant way.
+The memory bottleneck is a well known problem in computer architecture. Caching has become a standard for alleviating contention for data, the bus, and memory. As we trend to more cores, more applications, and larger computing problems, there is a much greater demand for data. Simply scaling cache size to compensate is too expensive, both in power and chip area.Data compression in the cache is a promising alternative to increasing effective on chip cache capacity. For the same physical cache space, we can store more blocks per set. The ideal cache compression implementation would be fast, simple, and offer a high compression. Many ideas from older literature on cache compression suffer from either poor compression or incur high hardware complexity or long decompression latencies.Why is fast decompression more important than fast compression? Decompression is on the critical path for a read. In order to supply the requested word, we must decompress the cache line. During a cache fill, compression can occur in the background while we bypass the requested word.
 
-An example submission (formatted using the HPCA-20 submission format) that
-contains the submission and formatting guidelines can be downloaded from
-the location cited below.  Complete details can be found on the
-conference website at {\em hpcaconf.org}.
-
-\noindent{\bf Changes to last year's format:}
-
-\begin{itemize}
-\item Papers are limited to 11 pages not including references.
-\item Each reference must specify all authors (no {\it et al.}).
-\end{itemize}
-
-\noindent{\bf Acceptance philosophy}
-
-Every effort will be made to judge a paper on its own merits. There will be no target acceptance rate. We expect to accept a wide range of papers with appropriate expectations for evaluation. 
-While papers that build on significant past work with strong evaluations are valuable, papers that open new areas with less rigorous evaluation are even more so.
-
-All questions regarding paper formatting and submission should be directed to
-the \href{mailto:enright@eecg.toronto.edu}{program chair}.
 
 \section{Preparation Instructions}
 
