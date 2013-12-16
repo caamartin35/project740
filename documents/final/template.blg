@@ -1,0 +1,113 @@
+This is BibTeX, Version 0.99d (TeX Live 2010)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: template.aux
+The style file: IEEEtranS.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: references.bib
+-- IEEEtranS.bst version 1.13 (2008/09/30) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+** Sorting version - not for normal IEEE work.
+Too many commas in name 1 of "G. Pekhimenko, V. Seshadri, O. Mutlu, M. Kozuch, P. Gibbons, T. Mowry" for entry baseDeltaImm
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "G. Pekhimenko, V. Seshadri, O. Mutlu, M. Kozuch, P. Gibbons, T. Mowry" for entry baseDeltaImm
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "G. Pekhimenko, V. Seshadri, O. Mutlu, M. Kozuch, P. Gibbons, T. Mowry" for entry baseDeltaImm
+while executing---line 2597 of file IEEEtranS.bst
+Name 1 in "T.M. Chilimbi, M.D.Hill, and J. R.Larus" has a comma at the end for entry structLayoutHints
+while executing---line 2597 of file IEEEtranS.bst
+Name 1 in "B. Calder, K. Chandra, S. John, and T. Austin" has a comma at the end for entry structLayoutAllocHints
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "Z. Wang, C. Wu, PC. Yew, J. Li, D. Xu" for entry runtimeSplit
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "Z. Wang, C. Wu, PC. Yew, J. Li, D. Xu" for entry runtimeSplit
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "P. Zhao, S. Cui, Y. Gao, R. Silvera, J. Amaral" for entry forma
+while executing---line 2597 of file IEEEtranS.bst
+Too many commas in name 1 of "P. Zhao, S. Cui, Y. Gao, R. Silvera, J. Amaral" for entry forma
+while executing---line 2597 of file IEEEtranS.bst
+** IEEEtran BST control entry "bstctl:etal" detected.
+** IEEEtran BST control entry "bstctl:nodash" detected.
+** IEEEtran BST control entry "bstctl:simpurl" detected.
+Name 1 in "B. Calder, K. Chandra, S. John, and T. Austin" has a comma at the end for entry structLayoutAllocHints
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "G. Pekhimenko, V. Seshadri, O. Mutlu, M. Kozuch, P. Gibbons, T. Mowry" for entry baseDeltaImm
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "G. Pekhimenko, V. Seshadri, O. Mutlu, M. Kozuch, P. Gibbons, T. Mowry" for entry baseDeltaImm
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "G. Pekhimenko, V. Seshadri, O. Mutlu, M. Kozuch, P. Gibbons, T. Mowry" for entry baseDeltaImm
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "P. Zhao, S. Cui, Y. Gao, R. Silvera, J. Amaral" for entry forma
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "P. Zhao, S. Cui, Y. Gao, R. Silvera, J. Amaral" for entry forma
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "S. Curial, P. Zhao, J. Amaral, Y. Gao, S. Cui, R. Silvera, R. Archambault" for entry mpads
+while executing---line 2609 of file IEEEtranS.bst
+Name 1 in "T.M. Chilimbi, M.D.Hill, and J. R.Larus" has a comma at the end for entry structLayoutHints
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "Z. Wang, C. Wu, PC. Yew, J. Li, D. Xu" for entry runtimeSplit
+while executing---line 2609 of file IEEEtranS.bst
+Too many commas in name 1 of "Z. Wang, C. Wu, PC. Yew, J. Li, D. Xu" for entry runtimeSplit
+while executing---line 2609 of file IEEEtranS.bst
+
+Done.
+You've used 10 entries,
+            4498 wiz_defined-function locations,
+            929 strings with 8885 characters,
+and the built_in function-call counts, 3604 in all, are:
+= -- 332
+> -- 77
+< -- 1
++ -- 32
+- -- 21
+* -- 165
+:= -- 647
+add.period$ -- 14
+call.type$ -- 10
+change.case$ -- 33
+chr.to.int$ -- 5
+cite$ -- 10
+duplicate$ -- 263
+empty$ -- 306
+format.name$ -- 23
+if$ -- 753
+int.to.chr$ -- 0
+int.to.str$ -- 7
+missing$ -- 41
+newline$ -- 44
+num.names$ -- 14
+pop$ -- 117
+preamble$ -- 1
+purify$ -- 24
+quote$ -- 8
+skip$ -- 293
+stack$ -- 0
+substring$ -- 46
+swap$ -- 122
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 9
+type$ -- 83
+warning$ -- 0
+while$ -- 16
+width$ -- 8
+write$ -- 78
+(There were 26 error messages)

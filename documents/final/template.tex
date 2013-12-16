@@ -23,158 +23,13 @@ We show here, as proof of concept, that existing techniques such as \textbf{Data
 
 \section{Introduction}
 
-The memory bottleneck is a well known problem in computer architecture. Caching has become a standard for alleviating contention for data, the bus, and memory. As we trend to more cores, more applications, and larger computing problems, there is a much greater demand for data. Simply scaling cache size to compensate is too expensive, both in power and chip area.Data compression in the cache is a promising alternative to increasing effective on chip cache capacity. For the same physical cache space, we can store more blocks per set. The ideal cache compression implementation would be fast, simple, and offer a high compression. Many ideas from older literature on cache compression suffer from either poor compression or incur high hardware complexity or long decompression latencies.Why is fast decompression more important than fast compression? Decompression is on the critical path for a read. In order to supply the requested word, we must decompress the cache line. During a cache fill, compression can occur in the background while we bypass the requested word.
+The memory bottleneck is a well known problem in computer architecture. Caching has become a standard for alleviating contention for data, the bus, and memory. As we trend to more cores, more applications, and larger computing problems, there is a much greater demand for data. Simply scaling cache size to compensate is too expensive, both in power and chip area.Data compression in the cache is a promising alternative to increasing effective on chip cache capacity. For the same physical cache space, we can store more blocks per set. In general, compression algorithms look for patterns in data to exploit. Therefore, they are very sensitive to how data is laid out in memory and the kind of data a program manipulates.The ideal cache compression implementation would be fast, simple, and offer a high compression. These design points are largely at odds with one another. For example, many ideas from older literature on cache compression suffer from either poor compression or incur high hardware complexity or long decompression latencies.Why is fast decompression more important than fast compression? Decompression is on the critical path for a read. In order to supply the requested word, we must decompress the cache line. During a cache fill, compression can occur in the background while we bypass the requested word.\subsection{Motivation}
+Recently, a paper on Base-Delta-Immediate compression \cite{baseDeltaImm} suggested technique called Base+Delta (B+$\Delta$) compression. Base-Delta-Immediate (B$\Delta$I) compression is the final iteration of the technique. In comparison to preceding work on cache compression, it hits the fast-simple-high-compression trifecta nicely.Their work yield largely positive results, making B+$\Delta$ compression worthy of further study and improvement. In particular, we observe that improving data layout in memory to leverage B+$\Delta$ compression in hardware may result in substantial performance gains. This paper focuses on two existing techniques: data splitting and memory. As a proof of concept, we show that applying these transformations to programs running on B+$\Delta$ architectures will realize considerable gains.
 
 
-\section{Preparation Instructions}
+\section{Related Work}
 
-\subsection{Paper Formatting}
-
-All submissions should contain a maximum of 11 pages of single-spaced
-two-column text and figures excluding references. You can use an unlimited number of extra pages for references. 
-If you are using \LaTeX~\cite{lamport94} 
-to typeset your paper, then we 
-strongly suggest
-that you use the template available at
-\url{http://www.eecg.toronto.edu/~enright/hpca20template.tar.gz} -- this
-document was prepared with that template.  This document can
-also be downloaded at \url{http://www.eecg.toronto.edu/~enright/hpca20sample.pdf}.
-If you are using a different
-software package to typeset your paper, then please adhere to the guidelines
-given in Table~\ref{table:formatting}.
-
-\begin{table}[h!]
-  \centering
-  \begin{tabular}{|l|l|}
-    \hline
-    \textbf{Field} & \textbf{Value}\\
-    \hline
-    \hline
-    Page limit & {\bf 11} pages, \\
-& {\bf not including references}\\
-    \hline
-    Paper size & US Letter 8.5in $\times$ 11in\\
-    \hline
-    Top margin & 1in\\
-    \hline
-    Bottom margin & 1in\\
-    \hline
-    Left margin & 0.75in\\
-    \hline
-    Right margin & 0.75in\\
-    \hline
-    Separation between columns & 0.25in\\
-    \hline
-    Body font & 10pt\\
-    \hline
-    Abstract font & 10pt, italicized\\
-    \hline
-    Section heading font & 12pt, bold\\
-    \hline
-    Subsection heading font & 10pt, bold\\
-    \hline
-    Caption font & 9pt, bold\\
-    \hline
-    References & 8pt, no page limit\\
-& list all authors' names \\
-    \hline
-  \end{tabular}
-  \caption{Formatting guidelines for submission.}
-  \label{table:formatting}
-\end{table}
-
-\textbf{Please ensure that you include page numbers with your
-submission}. This makes it easier for the reviewers to refer to
-different parts of your paper when they provide comments.
-
-Also, please ensure that your submission has a banner at the top of 
-the title page, similar to this one, which contains the submission
-number and the notice of confidentiality.  If using the template,
-just replace XXX in the template with the submission number
-you receive from the submission website.
-
-\subsection{Content}
-
-\noindent\textbf{\sout{Author List.}} All submissions are double
-blind. Therefore, please do not include any author names in the
-submission. You must also ensure that the metadata included in the
-PDF does not give away the authors. If you are improving upon your
-prior work, refer to your prior work in the third person.
-
-\noindent\textbf{Figures and Tables.} Ensure that the figures and
-tables are legible.  Please also ensure that you refer to your
-figures in the main text. The proceedings will be printed in
-gray-scale, and many reviewers print the papers in
-gray-scale. Therefore, if you must use colors for your figures, ensure
-that the different colors are highly distinguishable in gray-scale.
-If a figure is not easily understandable in gray-scale, then assume
-it will not be understood by the reviewers.  In many cases, it
-is better to just prepare your documents without color.
-
-\noindent\textbf{Main Body.} Avoid bad page or column breaks in
-your main text, i.e., last line of a paragraph at the top of a
-column or first line of a paragraph at the end of a column. If you
-begin a new section or sub-section near the end of a column,
-ensure that you have at least 2 lines of body text on the same
-column. 
-
-\noindent\textbf{References.} There is no length limit for references.  {\bf Each reference must explicitly list all authors of the paper} (no {\it et al.}).  Author of NSF proposals should be familiar with this requirement.  Knowing all authors of related work will help find the best reviewers. 
-
-\section{Submission Instructions}
-
-\subsection{Paper Authors}
-
-Declare all the authors of the paper upfront. Addition/removal of authors once
-the paper is accepted will have to be approved by the program chair.  The
-paper selection process is carefully run in a way that maximizes fairness
-by seeking to eliminate all conflicts of interest.  Late changes to author 
-lists can invalidate that process.
-
-\subsection{Declaring Conflicts of Interest}
-
-The authors must register all their conflicts into the paper submission site.
-Conflicts are needed to resolve assignment of reviewers. Please get the conflicts
-right.  You have several days between the registration of the paper and final
-submission -- there is no need to do the conflicts in a rush at the last
-second. If a paper is found to
-have an undeclared conflict that causes a problem, the paper may be rejected.
-
-Please declare a conflict of interest with the following for any author of a paper:
-
-\begin{enumerate}
-\item PhD advisor
-\item Other past or current advisors
-\item Current or past students
-\item People whom you have collaborated in the last 5 years. This collaboration can consist of a joint research or development project, a joint paper, or when there is direct funding from the potential reviewer (as opposed to company funding) to an author of the paper. Co-participation in professional activities, such as tutorials or studies, is not cause for conflict. When in doubt, the author should check with the PC chair. 
-\item People with the same current affiliation or who were in the same institution in the last 5 years.
-%\item People whom you co-authored papers with in the last 5 years
-%\item People whom you co-authored funded proposals with in the last 5 years.
-\item Between people whose relationship prevents the reviewer from being objective in his/her assessment. Please be reasonable.  For
-example, just because a reviewer works on similar topics as the paper you are
-submitting is on, you cannot declare a conflict of interest with them.
-\end{enumerate}
-
-All conflicts must be justified.
-You will have to declare all conflicts with PC members as well as non-PC members 
-with whom you
-have a conflict of interest.  When in doubt, contact the \href{mailto:enright@eecg.toronto.edu}{program chair}.
-
-\subsection{Concurrent Submissions and Resubmissions of Already Published Papers}
-
-By submitting a manuscript to HPCA-20, the authors guarantee that the
-manuscript has not been previously published or accepted for publication in a
-substantially similar form in any conference or journal. The authors also
-guarantee that no paper which contains significant overlap with the
-contributions of the submitted paper is under review to any other conference or
-journal or workshop, or will be submitted to one of them during the HPCA-20
-review period. Violation of any of these conditions will lead to rejection.
-
-Extended versions of papers accepted to IEEE Computer Architecture Letters can
-be submitted to HPCA-20.  If you are in doubt, contact the \href{mailto:enright@eecg.toronto.edu}{program chair}.
-
-\subsection{Submission Site}
-
-The submission site is located at \url{http://hpca20.eecg.toronto.edu/conf}.
+There is a substantial body of work on optimizing the arrangement of data in memory to improve temporal and spatial locality. Notably these approaches often involve compiler hints or runtime directives to a runtime library \cite{structLayoutHints} or allocator \cite{structLayoutAllocHints} for cache conscious data placement.The idea of cache conscious data placement is not new. Further studies on dynamic analysis using profiling \cite{autoPoolAlloc} and even runtime structure splitting \cite{runtimeSplit} were introduced to reduce programmer effort. The latter technique offers great adaptability to the dynamic needs of the program, but incurs some overhead due to safety checks.These findings enumerate various methods for \textbf{safely} and \textbf{efficiently} controlling data placement in memory, and performing the necessary pointer transformations in the compiler. \textit{However, none of this prior work has targeted B+$\Delta$ compression specifically.}B+$\Delta$ compression leverages that observation that for many cache lines, the values contained have a low dynamic range. That is, they could be encoded using a common base-value and a number of much smaller delta-values. For architectures that implement B+$\Delta$ cache compression, a cache conscious placement policy would then place values with low dynamic range together, therefore minimizing the deltas.We investigate two existing mechanisms that place similar values together in memory: \textbf{data splitting and memory pooling}. As a proof of concept, this paper does not address the non-trivial implementation challenges for splitting and pooling data. There is however, compelling work in the area such as MPADS \cite{mpads} and Forma \cite{forma}.\\\noindent\textbf{Why Base-Delta and not Base-Delta-Immediate?}This paper focuses on BD compression over BDI compression for a couple reasons. First, we suspect that applying techniques such as data splitting and memory pooling will alleviate many of the low compressibility cases that BD suffered on the benchmark tests. The second is simplicity. Encoding cache lines with one base requires less metadata in the tag store and simpler hardware.
 
 \bstctlcite{bstctl:etal, bstctl:nodash, bstctl:simpurl}
 \bibliographystyle{IEEEtranS}
