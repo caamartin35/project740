@@ -86,13 +86,15 @@ Our idea is simple. Arrange data in memory optimally for BD compression. Data sp
 \subsection{Data Splitting and Pooling} For such programs, we want to allocate objects such that we maintain spatial locality of similar-valued members. More elaborately, \textbf{split} an object up into its respective members. Allocate space for those members based on what kinds of values they hold--these decisions may be during compile time or runtime, depending on the pooling implementation. Members with similar value-types should be \textbf{pooled} (allocated) together.Expanding on the example from the previous section, we might have separate memory pools for flags, counters, and pointers. This creates contiguous regions of memory with much lower dynamic range. Now, when the next-pointer member of a node is read, the likelihood that the resulting cache fill is B+$\Delta$-compressible is far greater.The key observation here is that B+$\Delta$ compression  can strongly leverage any data transformations that create regions of low dynamic range.
 
 \begin{figure}[bp]
+  \captionsetup{justification=raggedright, singlelinecheck=false}
+    \caption{Basic splitting and pooling example (64-bit).}
   \centering
     \includegraphics[scale=0.27]{mechanisms.pdf}
 \end{figure}
 
 \subsection{Caveats}Some simplifications were made to the above examples for that sake of brevity. For example, a long string of boolean flags in memory is seldom B+$\Delta$-compressible. This is because B+$\Delta$ compression operates at 4-byte and 8-byte granularities. A string of 32 or 64 booleans has high entropy, even for biased distributions for true and false values. Interpreting these strings as integers and computing the differences may result in very large deltas, and low compressibility.
 
-\section{Evaluation Methodology}This paper intends to show proof of concept. As such, we opted to evaluate over more specific metrics than straight IPC performance. Instead, we are more interested in compression ratio and a subsequent reduction in MPKI. We expect these metrics to strongly correlate with the computed IPC on a cycle accurate simulator.
+\section{Evaluation Methodology}This paper intends to show proof of concept. As such, we opted to evaluate over more specific metrics than straight IPC performance. Instead, we are more interested in compression ratio and a subsequent increase in hit rate. We expect these metrics to strongly correlate with the computed IPC on a cycle accurate simulator.
 
 We measure compression ratio for a given benchmark as follows, where $util$ is the amount of cache space in use. The higher the better.
 \[
@@ -111,6 +113,35 @@ Only a single level memory hierarchy is simulated here. Even though B+$\Delta$ c
 
 \textbf{B+$\Delta$ cache simulator} -- a 16-way, 32-byte block cache. This cache performs B+$\Delta$ style compression on inserted cache lines. Again, the cache capacity is varied throughout the study to observe the effect of small space constraints, large working sets, and pooling.The simulator implements a perfect LRU policy. When a newly inserted cache line exceeds the size of the set, LRU blocks are evicted until the new block fits. Recent literature, such as Cache Aware Replacement Policies\cite{carp} (CARP) suggests many optimizations to this policy, but they are not simulated here.
 
+\begin{figure}[bp]
+  \centering
+    \includegraphics[width=\linewidth]{pooling-effect.pdf}
+  \caption{Effect of splitting and pooling on B+$\Delta$ compression.}
+\end{figure}
+
+\section{Results and Analysis}
+
+\subsection{Effects of Splitting and Pooling on Block Types}For a sanity check, we first look at the block types that occur in a B+$\Delta$ compressed cache with splitting and pooling, and without. Figure 2 shows each benchmark paired with its split-pool transformed counterpart.Without splitting and pooling, B+$\Delta$ compression is able to effectively compress about 20\% of the total number of blocks allocated (with the exception of the \textit{sort} micro-benchmark). By effective, we mean that a compression ratio of 1.5 or greater is achieved. These are labeled as \textit{medium} blocks. \textit{Large} blocks are either incompressible (represented with the full 32 bytes) or obtain very little space savings.With splitting and pooling, however, we observe a substantial increase in blocks that are \textit{zero}, \textit{repeated}, and \textit{medium} compressible. The increase in \textit{zero}-type blocks is particularly promising, because they can be encoded with only 1 byte using B+$\Delta$. \textbf{Overall, we improve the ratio of effectively compressed blocks from 20\% to 68\%.} This is an excellent result. 
+
+
+\subsection{Varying the Cache Size}As the cache size is increased, we see a very different trend past the 64KB mark. This is because the average working memory set of our micro-benchmark suite is about 90KB. When a program's working set is larger than the cache capacity, we incur a much greater fraction of conflict and capacity misses. Under these conditions, the cache stays full once it has warmed up, and behaves differently thusly. We elaborate on the dichotomy between the left and right sides of figures 3 and 4 below.
+
+
+\subsection{Effect on Compression Ratio}Figure 3 shows the compression ratio each implementation achieves with respect to the baseline cache. On the left of Figure 3, we observe that the baseline, pooling, and B+$\Delta$ implementation achieve no \textit{relative} compression because they all fill the cache to capacity while trying and accommodate the working set. B+$\Delta$ with splitting and pooling performs substantially better than all other implementations. We attribute the improvement over standalone B+$\Delta$ compression to the better \textit{value}-locality exposed by pooling. For cases where the cache capacity is smaller than the working set, we achieve a worst case 20\% improvement over the baseline.On the right of figure 3, cache capacities are greater than the working set. We see little variation between a particular implementation across cache size. This is because they are all able to accommodate the memory needs of the programs. B+$\Delta$ with splitting and pooling outperforms the other implementations by almost 3X. As an aside, we observe relatively how much more space it takes for the other implementations to encode the working set in the cache.A quick glance at the right side of Figure 4 indicates that we do not realize performance gains over the baseline for hit-rate, despite achieving large space savings. We explain this below. We believe these space saving will become increasingly important in multiprogrammed environments, as they could mitigate cache pollution and memory interference.
+
+\subsection{Effect on Hit Rate}Figure 4 shows the hit rate each implementation achieves with respect to the baseline. A brief inspection illuminates the same dichotomy in behavior around the size of the working set. We will explain each side in detail. On the left of Figure 4, the working set of the micro-benchmark programs is larger than the cache capacity. Keeping useful data in the cache is strained by capacity and conflict misses, which lead to evictions. Compression benefits manifest themselves very clearly under such conditions. Encoding more data in the cache effectively increases the capacity (both overall and in each set), and mitigates the high miss-and-evict rate.As in prior work B+$\Delta$ offers some performance gains here. Standalone splitting and pooling does as well. We attribute this to the fact that such techniques improve locality in general.B+$\Delta$ with splitting and pooling again outperforms the others considerably. As the cache capacity approaches the size of the working memory set, the gains become less substantial. This is because the other configurations become less constrained for space.On the right side of Figure 4, the cache capacities are larger than working set. Because all configurations can handle the data footprint, we see no relative gains of on over another. Performance distinctions become much clearer as you place the system under more pressure.
+
+\begin{figure}
+  \centering
+    \includegraphics[width=\linewidth]{size2compression.pdf}
+  \caption{Average normalized compression ratio for various cache sizes.}
+\end{figure}
+
+\begin{figure}
+  \centering
+    \includegraphics[width=\linewidth]{size2hits.pdf}
+  \caption{Average normalized hit ratio for various cache sizes.}
+\end{figure}
 
 \bstctlcite{bstctl:etal, bstctl:nodash, bstctl:simpurl}
 \bibliographystyle{IEEEtranS}
